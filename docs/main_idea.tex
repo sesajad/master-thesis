@@ -1,0 +1,54 @@
+\documentclass{article}
+
+\usepackage{physics}
+\usepackage{amsthm}
+\newtheorem{defn}{Definition}
+\def\F{\mathcal{F}}
+\begin{document}
+  \begin{defn}[Device]
+    \[ \text{Device} := (w_0 , G_d(N_d, V_d, w_\F)) \]
+    where
+    \[ \begin{cases}
+    w_0 = \tau_\text{2-qubit gate time} / \tau_\text{decoherence} \\ 
+    w_\F(v) = -\log(\bar\F_\text{2-qubit gate on edge $v$} ) 
+    \end{cases} \]
+  \end{defn}
+  
+  \begin{defn}[Partial Allocation]
+    \[ \text{Partial Allocation }\phi : N \rightharpoonup  N_d \]
+  \end{defn}
+  
+  \begin{defn}[Actions and Costs]
+  Simple actions are
+  \begin{itemize}
+    \item Allocate: $\phi \mapsto \phi \cup \{(n, n_d)\}$, cost: $0$
+    \item Swap: $\phi \mapsto \phi \circ \sigma_{ab}$, cost: $w_\F(v) + (n - 2)w_0$?
+    \item Apply: $\phi \mapsto \phi$, cost: $w_\F(v) + (n - 2)w_0$?
+    \item Bridge??
+  \end{itemize}
+  
+  Plus compound actions with reduced cost
+  \begin{itemize}
+    \item Compose: If a swap and an apply are on the same edge, then the cost halves.
+    \item Parallelize: If $k$ simple actions have no node in common, total cost will be reduced by $(k - 1)nw_0$.
+  \end{itemize}
+  \end{defn}
+  
+  \begin{defn}
+    Applicability of $(n_1, n_2)$ is checking that $(\phi(n_1), \phi(n_2)) \in V_d$
+  \end{defn}
+  
+  \begin{defn}
+    \[ d(n_1, n_2) := d_w(\phi(n_1), \phi(n_2))\]
+  \end{defn}
+  
+  \begin{defn}
+  \[ d(\phi_1, \phi_2) := \text{minimum cost of reaching 2 from 1 by swaps and allocations} \]
+  \end{defn}
+  
+  \text{The target} is to apply all $T \subseteq N \times N$. We may add some dependencies later.
+  
+  \textbf{The algorithm is} an A*, with only branching to $t \in T$ applicable...
+  
+  Best initial allocation is NP-Hard.  
+\end{document}

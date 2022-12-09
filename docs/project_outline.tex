@@ -1,0 +1,65 @@
+\documentclass{article}
+
+\usepackage{pgfgantt}
+
+\usepackage{pgfgantt}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+\ganttset{group/.append style={orange},
+milestone/.append style={red},
+progress label node anchor/.append style={text=red}}
+
+\title{Project Outline}
+\author{Seyed Sajad Kahani \\ 22222815}
+
+\begin{document}
+  \maketitle
+  \section{Motivation}
+
+To achieve the goal of utilizing quantum computers for real-world application, we need to make wide range of advances, ranging from reaching a reasonable number of qubits in the hardware, to programming languages and compilers to describe the algorithms properly. So far, the number qubits have reached the desired point for the early applications, and the main two barrier for running a general quantum algorithm, are the effect of noises (especially for entangling gates) and decoherence time, which limits the depth of the circuit for the algorithm.
+In this context, the effect of a problem-specific compiler could be huge, as it can outperform the general-specific compilers in both, the complexity of the resulting circuit (reducing the depth) and in the accuracy (reducing the effect of noise).
+
+  \section{Aim}
+  
+  The aim of this project is to improve 2QAN, as a baseline problem-specific compiler, designed to compile two-local Hamiltonians on arbitrary architectures. The possible enhancements include but are not limited to:
+
+  \begin{itemize}
+  \item	Making the compiler noise-aware to reduce the overall error, as well as the other parameters.
+  \item	Rigorously defining the problem of compiling a Hamiltonian.
+  \item	Using standard A* search for solving the problem.
+  \item	Exploring effect of the arbitrary applying order on the hardness problem.
+  \item	Using higher order Trotter formula and handling the dependency constraints.
+  \end{itemize}
+  
+  Besides a complete literature review of special-purpose compilers, as well as looking for similar ideas in the general-purpose compilers’ literature, the methodology of this research consists of feedback cycles. Each cycle starts with exploring these ideas analytically, and then performing simulations and experiments on devices (if possible), which can lead to insights on the performance of the idea. These insights will be used to improve the ideas and then start all over again.
+
+  Also, the improved compiler may can be implemented in a reusable manner and be published as a library.
+
+  \section{Timeline}  
+  
+  \begin{figure}[ht]
+    \centering
+    \noindent\makebox[\textwidth]{
+    \begin{ganttchart}[
+      x unit=1cm,
+      hgrid,
+      vgrid,
+      today={2022-11},
+      today label=Now,
+      time slot format=isodate-yearmonth,
+      time slot unit=month]{2022-09}{2023-09}
+    \gantttitlecalendar{year, month=shortname} \\
+    \ganttbar{Early Discussions}{2022-09}{2022-10} \\
+    \ganttbar{Literature Review}{2022-10}{2023-03} \\
+    \ganttbar{Exploring New Ideas}{2022-10}{2023-02} \\
+    \ganttbar{Simulations}{2023-01}{2023-06} \\
+    \ganttbar{Refining Ideas}{2023-02}{2023-06} \\
+    \ganttbar{Finalizing Results}{2023-06}{2023-08} \\
+    \end{ganttchart}}
+    \caption{Gantt chart of the project}
+  \end{figure}
+  
+  \section{Remarks}
+  References will be provided upon request.
+\end{document}

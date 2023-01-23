@@ -1,5 +1,8 @@
 \documentclass{article}
 
+\usepackage{biblatex}
+\addbibresource{resources.bib}
+
 \usepackage{graphicx}
 \usepackage{tikz}
 \usetikzlibrary{arrows}
@@ -12,6 +15,7 @@
 \author{S. S. Kahani}
 
 \newtheorem{defn}{Definition}
+\newtheorem{thrm}{Theorem}
 \newtheorem{prob}{Problem}
 \def\F{\mathcal{F}}
 
@@ -24,20 +28,21 @@
   \section{Introduction}
   
   While we are far from a general-purpose quantum computer 
-  \cite{?} % maybe that 2019 paper or BCG/McKenzie?
-  that speeds up solving a vast range of problems, early real-world application could still be happening anytime soon by focusing on specific problems.
-  %TODO any reference?
+  \cite{langione2019}
+  that speeds up solving a vast range of problems, early real-world application could still be happening anytime soon by focusing on specific problems. \cite{preskill2018}
   Therefore, the importance of specific-purpose compilation is undeniable.
   
   Moreover, it is guessed that the early applications of quantum computers will include but not be limited to discrete optimizations and physical simulations.
   \cite{?} % 2019 paper
-  This means that studying the compilation of k-local Hamiltonians is a meaningful choice as they play a significant role in the optimizations (like in QAOA \cite{?} and VQE \cite{?}) and undoubtedly in the physical simulations as well. 
+  This means that studying the compilation of k-local Hamiltonians is a meaningful choice as they play a significant role in the optimizations (like in QAOA \cite{farhi2014} and VQE \cite{peruzzo2014}) and undoubtedly in the physical simulations as well. 
   \cite{?} % TODO cite some review paper
 
+  We may count the famous Trotter-Suzuki decomposition (see \ref{defn:trotter-suzuki}) as the first effort in compilation of Hamiltonians.
+  But other works does not necessarily rely on that like \cite{campbell2019}.
   % TODO related work
   { \color{blue} TODO related work }
   
-  This work is based on the 2QAN compiler \cite{?} which is a hardware-aware compiler for 2-local Hamiltonians. The main contribution of this work is to improve the compilation of 2QAN by taking errors into account and introducing a new compilation algorithm. 
+  This work is based on the 2QAN compiler \cite{lao2021} which is a hardware-aware compiler for 2-local Hamiltonians. The main contribution of this work is to improve the compilation of 2QAN by taking errors into account and introducing a new compilation algorithm. 
 
   % TODO classical compilation
   { \color{blue} TODO classical compilers }
@@ -51,11 +56,11 @@
     \tikzstyle{rblock}=[block, rounded corners=1cm];
     \node [rblock] (a) {Start with $H$};
     \node [block, below of=a] (b) {\textbf{Preprocess} \\ Apply Trotter-Suzuki decomposition to $H$};
-    \node [block, below of=b] (c) {\textbf{Hardware-Aware Compilation} \\
+    \node [block, below of=b] (c) {\textbf{Allocation} \\
     Allocate qubits based on the connectivity and fidelities};
-    \node [block, below of=c] (d) {\textbf{Hardware-Aware Compilation} \\
+    \node [block, below of=c] (d) {\textbf{Intermediate Compilation} \\
     Generate intermediate gates};
-    \node [block, below of=d] (e) {\textbf{Hardware-Aware Compilation} \\
+    \node [block, below of=d] (e) {\textbf{Device Specific Compilation} \\
     Transpile to device-specific gates};
     \draw [->] (a) -- (b);
     \draw [->] (b) -- (c);
@@ -84,10 +89,11 @@
     We will define the graph $G_H(V_H, E_H)$ to represent the Hamiltonian $H$, in a way that for each term $h_i$ in $H$, we have an edge $e_i$ between the two qubits it acts on.
   \end{defn}
 
-  The very first step toward the compilation of a 2-local Hamiltonian is to apply the first-order Trotter-Suzuki decomposition \cite{?} to it. This decomposition is a way to approximate the time evolution of a Hamiltonian by a sequence of gates. 
+  The very first step toward the compilation of a 2-local Hamiltonian is to apply the first-order Trotter-Suzuki decomposition \cite{trotter1959} to it. This decomposition is a way to approximate the time evolution of a Hamiltonian by a sequence of gates. 
   % TODO error of trotter
 
   \begin{defn}[Trotter-Suzuki decomposition]
+    \label{defn:trotter-suzuki}
     The first order Trotter-Suzuki decomposition, decomposes a Hamiltonian $H$, into a set of two-qubit gates $g_i$s which associated with an edge like $e_i$.
     \begin{equation}
       \text{Target Gates} := \{ (g_i, e_i) \}
@@ -99,34 +105,80 @@
   % TODO what about higher order Trotter-Suzuki decomposition?
   % TODO see the new paper "Trotter Errors and the Emergence of Chaos in Quantum Simulation"
 
-  \section{Two Qubit Gates}
-  Here we mention the two-qubit gates that are used as an intermediate gates in the process of compilations.
-  
-  \subsection{SWAP and Bridge Gates}
-  In a situation that a mapping is already applied, the main limitation is the connectivity of the device, therefore where two qubits are not directly connected, we need to employ a chain of gates, to apply the target gate on them.
+  \section{Intermediate Gate Set}
 
-  The SWAP gate is well-known, but it is not the only gate that can be used for this purpose. The bridge gates that are introduced in \cite{?} for a simple case, can be expanded and employed for this purpose. 
+  In order to breakdown the process of compilation, which is surely a complex task, we use an intermediate description of the circuit, in terms of the intermediate gate set.
 
-  The bridge gate is an equivalent expansion of a CNOT gate, applied on two qubits that are connected through a chain of qubits.
+  This gate set is presumed to not be directly available on any device, but rather, it is easy to generate them relatively efficient on a quantum device. It is not wondering that we assume that the intermediate circuit must obey the topology of the device.
+
+  While the implementation of one-qubit gates is not challenging, it is convenient to have all of the one-qubit gates, in the set, but for two qubit gates, many restrictions must be applied.
+
+  The most important two-qubit gate that is often a part of any gate set is the CNOT gate. And because of the topology of the device, the CNOT might not be available on all pairs of qubits. Therefore we often add SWAP gate to make it possible all the way through the circuit, but optimality of the circuit is questionable in this case. Here we introduce a new gate, which is a generalization of the CNOT gate, which is shown to be more efficient than applying a SWAP gate.
+
+  \subsection{Introducing Bridge Gates}
+  For a simple case, that we have three qubits, called $a, b, c$, and we want to apply a CNOT gate on $(a, c)$, but the connectivity only allows us to apply a CNOT gate on $(a, b)$ and $(b, c)$, the first solution would be to use a SWAP gate, which is shown in figure \ref{fig:bridge-one-with-swap} (7 gates, depth of 7)
+  While another approach is to use a bridge gate, which is shown in figure \ref{fig:bridge-one-with-bridge} (4 gates, depth of 4).
+
+  \def\qceq{\midstick[3,brackets=none]{=}}
+  \begin{figure}[h]
+    \label{fig:bridge-one-with-swap}
+    \centering
+    \begin{quantikz}
+    \lstick{a} & \ctrl{2} & \qw \qceq & \swap{1} & \qw & \swap{1} & \qw\qceq & \ctrl{1} & \targ{} & \ctrl{1} & \qw &\ctrl{1} & \targ{} & \ctrl{1} & \qw \\
+    \lstick{b} & \qw & \qw & \swap{} & \ctrl{1} & \swap{} & \qw & \targ{} & \ctrl{-1}& \targ{} & \ctrl{1} & \targ{} & \ctrl{-1}& \targ{} & \qw \\
+    \lstick{c} & \targ{} & \qw  & \qw & \targ{} & \qw & \qw & \qw & \qw & \qw & \targ & \qw & \qw & \qw & \qw  & \qw \\
+    \end{quantikz}
+    \caption{Applying a CNOT gate on $(a, c)$ using a SWAP gate}
+  \end{figure}
+
+  \begin{figure}[h]
+    \label{fig:bridge-one-with-bridge}
+    \centering
+    \begin{quantikz}
+    \lstick{a} & \ctrl{2} & \qw \qceq & \qw & \ctrl{1} & \qw & \ctrl{1} & \qw \\
+    \lstick{b} & \qw & \qw & \ctrl{1} & \targ{} & \ctrl{1}  & \targ{} & \qw \\
+    \lstick{c} & \targ{} & \qw & \targ{} & \qw  & \targ & \qw  & \qw &  \qw \\
+    \end{quantikz}
+    \caption{Applying a CNOT gate on $(a, c)$ using a bridge gate}
+  \end{figure}
   
-  The bridge gate is defined as follows:
-  \def\qceq{\midstick[4,brackets=none]{=}}
-  \begin{defn}{Bridge Gate}
-    \begin{figure}[h]
-      \centering
- \begin{quantikz}
-\qw &\ctrl{3} &\qw\qceq & \qw & \qw &\ctrl{1} & \qw & \qw & \qw & \ctrl{1}&\qw&\qw\\
-\qw & \qw & \qw & \qw &\ctrl{1} & \targ{} &\ctrl{1} & \qw &\ctrl{1}& \targ{} & \ctrl{1}&\qw\\
-\qw & \qw & \qw &\ctrl{1} & \targ{} & \qw & \targ{} &\ctrl{1}&\targ{} & \qw & \targ{} &\qw \\
-\qw & \targ{} & \qw & \targ{} & \qw & \qw & \qw & \targ{} & \qw &\qw& \qw & \qw 
- \end{quantikz}
-      \caption{The bridge gate}
-    \end{figure}
-    \[ \text{Bridge}(i, j) := \qty( \prod^{\leftarrow}_{k = i + 2, k < j} \text{CNOT}(k - 1, k) \prod^{\leftarrow}_{k = j, k > i} \text{CNOT}(k - 1, k) )^2  \]
+  This example, could be generalized and the bridge gate must be generalized as well. Hereby we define the generalized version of the bridge gate and we show the optimality of the bridge gate in terms of the number of CNOT gates and the depth of the circuit.
+
+  \def\qceq{\midstick[6,brackets=none]{=}}
+  \begin{defn}{Generalized Bridge Gate}
+    For an even $n$
+    \begin{align*} \mathrm{Bridge}(1, n) = &\prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i + 1, i)\mathrm{CNOT}(n - i + 1, n - i) \\ & \prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i, i + 1)\mathrm{CNOT}(n - i, n - i + 1) \\ & \mathrm{Bridge}(n/2 - 1, n/2)  \\
+    & \qty(\prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i + 1, i)\mathrm{CNOT}(n - i + 1, n - i))^\dagger \\ 
+    & \qty(\prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i, i + 1)\mathrm{CNOT}(n - i, n - i + 1))^\dagger
+    \end{align*}
+    but for an odd $n$, it is a little bit different.
   \end{defn}
 
+  \begin{figure}[h]
+    \centering
+\begin{quantikz}
+\qw &\ctrl{5}&\qw\qceq&\targ{}  & \qw     &\ctrl{1}& \qw    & \qw    & \qw    &\ctrl{1}& \qw     &\targ{}&\qw\\
+\qw & \qw    & \qw    &\ctrl{-1}&\targ{}  & \targ{}&\ctrl{1}& \qw    &\ctrl{1}&\targ{} &\targ{}  &\ctrl{-1}&\qw\\
+\qw & \qw    & \qw    & \qw     &\ctrl{-1}& \qw    & \targ{}&\ctrl{1}&\targ{} & \qw    &\ctrl{-1}&\qw & \qw \\
+\qw & \qw    & \qw    & \qw     &\targ{}  & \qw    &\ctrl{1}& \targ{}&\ctrl{1}& \qw    &\targ{}  &\qw & \qw\\
+\qw & \qw    & \qw    &\targ{}  &\ctrl{-1}&\ctrl{1}& \targ{}& \qw    &\targ{} &\ctrl{1}&\ctrl{-1}&\targ{}&\qw \\
+\qw &\targ{} & \qw    &\ctrl{-1}& \qw     & \targ{}& \qw    & \qw    & \qw    &\targ{} & \qw     &\ctrl{-1}& \qw 
+\end{quantikz}
+    \caption{The bridge gate for $n=6$}
+  \end{figure}
+
+  \begin{thrm}
+    Assume that we decomposed a CNOT between the first and the last qubits in a chain, in terms of local circuit.
+    This circuit must carry information from the first bit to the last and reverse.
+    For the forward information flow, the information is an $X$ gate placed on the first qubit, will travel along the circuit, so we need to have a consequential $n$ CNOT gates to carry this information. The same argument is valid for a backward series of gates.
+    Ignoring the first and the last qubit, for each qubit this argument is also valid that, the gate in those series must not be the first neither the last CNOT gate applied on the qubit.
+    Therefore, at least we need to have two series, each has to have a range of CNOT gates, before and after.
+    One could easily manage to find out that the simplest structure would be similar (in terms of complexity) to the proposed bridge gate.
+  \end{thrm}
+
+
   As far as we know, the family of bridge gates with more than one qubit in the chain is not studied yet, and neither implemented in any quantum compiler. 
-  It can be easily shown that for a simple case like the one in the figure \ref{fig:bridge-simplification} that we need to swap and return the qubits, using bridge gate can reduce both depth and number of gates. { \color{red} DOUBT } % TODO
+  It can be easily shown that for a simple case like the one in the figure \ref{fig:bridge-simplification} that we need to swap and return the qubits, using bridge gate can reduce both depth and number of gates. 
 
   \begin{figure}
     a) \\
@@ -195,4 +247,6 @@
   % branching, consistency, admissibility
   \subsection{Resource Allocation}
   
+\printbibliography
+
 \end{document}

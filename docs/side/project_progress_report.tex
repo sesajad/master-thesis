@@ -155,7 +155,7 @@ While another approach is to use a bridge gate, which is shown in figure \ref{fi
 
     where each term of each products in the RHS and the LHS can be applied simultaneously (4 gates at a time).
     Therefore, the depth of the circuit is $n + O(1)$.
-    Hereby we can see an example of the bridge gate for $n = 6$ in fig. \ref{fig:bridge-simplified}.
+    Hereby we can see an example of the bridge gate for $n = 6$ in fig. \ref{fig:simplified-bridge}.
   \def\qceq{\midstick[6,brackets=none]{=}}
   \begin{figure}[h]
     \centering
@@ -168,7 +168,7 @@ While another approach is to use a bridge gate, which is shown in figure \ref{fi
 \qw &\targ{} & \qw    &\ctrl{-1}& \qw     & \targ{}& \qw    & \qw    & \qw    &\targ{} & \qw     &\ctrl{-1}& \qw 
 \end{quantikz}
     \caption{The bridge gate for $n=6$}
-    \label{fig:bridge-simplified}
+    \label{fig:simplified-bridge}
   \end{figure}
 
   Furthermore, we can use the same idea and create a bridge gate to express $e^{iZ^{1}X^{n}}$ using CNOTs and $e^{iZ^{1}X^{2}}$ gates. Then we are working on the most general way to bridge a qubit gate between two qubits in a chain.
@@ -176,7 +176,7 @@ While another approach is to use a bridge gate, which is shown in figure \ref{fi
   It is also proved that any effort to decompose a CNOT into a chain of CNOTs, cannot result in any complexity better than the simplified bridge gate. Therefore, the simplified bridge gate is the best possible gate to bridge a qubit gate between two qubits in a chain.
 
   As far as we know, the family of bridge gates (the previous one or the simplified one) is not implemented (explicitly or implicitly) in any quantum compiler. 
-  It can be easily shown that for a simple case like the one in the figure \ref{fig:bridge-simplification} that we need to swap and return the qubits, using bridge gate can reduce both depth and number of gates.
+  It can be easily shown that for a simple case like the one in the figure \ref{fig:compliation-using-bridge} that we need to swap and return the qubits, using bridge gate can reduce both depth and number of gates.
 
   \begin{figure}
     a) \\
@@ -188,6 +188,7 @@ While another approach is to use a bridge gate, which is shown in figure \ref{fi
     c) \\
     \includegraphics[width=0.9\textwidth]{../../code/expm_1_bridge/out/transpiled_circuit_bridge}
     \caption{a) The original circuit, consisting of some local operations, then a far away CNOT and then some local operations. b) The circuit after transpiling using Qiskit. c) The circuit after transpiling using bridge gate as an intermediate gate.}
+    \label{fig:compliation-using-bridge}
   \end{figure}
 
 \section{Challenges}

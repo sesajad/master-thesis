@@ -30,28 +30,44 @@ The literature review is divided into three parts: general-purpose quantum compi
 
 \subsection{General Quantum Compilers}
 
-The first part, consists of papers which are directly related to quantum compilation. While most of the papers are useful for our case, we are also looking for two specific subjects in these papers.
+In the first part, we review papers directly related to quantum compilation. While most of the papers are useful for our case, we are focusing on two specific subjects: the approaches to the gate-set, especially two-qubit gates, during the compilation process, and the algorithms and principles for qubit allocation and routing gates through the device.
 
-First, we are looking for the approaches to the gate-set specially two-qubit gates through the process of compiling.
-Secondly, our aim is to extract the algorithms and principles for qubit allocation, and routing gates through the device.
+We have analyzed almost all of the papers listed, with a focus on the gate-set. However, we are still reviewing the papers to organize and categorize the algorithms and corresponding problems in qubit allocation and routing.
 
-We have analysed almost all of the papers listed below, in terms of the gate-set, but we are still looking through the papers to organize and categorize their algorithms and their corresponding problems in qubit allocation and routing.
+
+
+
+Seyed Sajad Kahani
+can you list your changes?
+Yes, here are the changes made to the text:
+
+The literature review is divided into three parts: general-purpose quantum compilers, specific-purpose quantum compilers for Hamiltonians, and classical problems and algorithms related to the compilation.
+
+Subsection: General Quantum Compilers
+
+The first part consists of papers that are directly related to quantum compilation. While most of the papers are useful, we are also searching for two specific subjects.
+
+Approaches to the gate-set, especially two-qubit gates, during the compilation process.
+Algorithms and principles for qubit allocation and routing gates through the device.
+
+We have analysed almost all of the papers listed below with respect to the gate-set. However, we are still reviewing the papers to categorize their algorithms and corresponding problems in qubit allocation and routing.
 
 \printbibliography[heading=none,keyword=general]
 
 \subsection{Hamiltonian Quantum Compilers}
 
-Compilation of Hamiltonians has its own literature, although it is not as extensive as that of general quantum compilers. Any paper related to the compilation of Hamiltonians is considered as a part of this section and is being carefully studied.
+Compilation of Hamiltonians has its own literature, though  it is not as extensive as that of general quantum compilers. Any paper related to the compilation of Hamiltonians is considered as a part of this section and should be carefully studied.
 
-The paper \cite{lao2021} is being used as a baseline for our project.
+
+As a baseline for our project, we are using the paper \cite{lao2021} which is a recent work on the compilation of Hamiltonians.
 
 \printbibliography[heading=none,keyword=hamiltonian]
 
 \subsection{Classical Compilation and Related Problems}
 
-Many of the problems in designing and implementing quantum compilers have counterparts in the classical world that are well-studied. A deep review of classical compilation is necessary for this project, as well as a search for algorithms from related fields such as resource allocation in distributed systems and scheduling in operating systems.
+Many of the challenges in designing and implementing quantum compilers have comparable solutions in the classical world that have been well-studied. It is important to conduct a thorough review of classical compilation for this project, as well as explore algorithms from related fields such as resource allocation in distributed systems and scheduling in operating systems to possibly find the standard solutions to the problems we face.
 
-We have started reviewing the two main books \cite{aho1986} and \cite{allen2001}, and are still looking for additional relevant papers.
+We have initiated our review with two textbooks in classical compilation \cite{aho1986} and \cite{allen2001}. We will also continue to search for any additional relevant papers.
 
 \printbibliography[heading=none,keyword=classical]
 
@@ -62,6 +78,15 @@ The objective of this project is to survey the current literature on compiling l
 The results of this project will then be tested and evaluated for performance and quality, with the goal of creating a prototype implementation that can be used and further developed by other researchers. It should be noted that the focus will be on exploring solutions rather than creating a polished and highly-engineered implementation.
 
 Note that this objective, is carried on from the beginning of the project, and it is still valid by this time.
+
+\section{Research Method}
+The research methodology for this project involves a three-step process: 
+
+In the first step, a new algorithm or approach to the problem is introduced. This could be an idea that has not been explored before, or an improvement on an existing method.
+
+The next step is to evaluate the correctness and optimality of the new idea. This is done by using mathematical tools such as complexity theory, to ensure that the new approach will work as intended and that it is optimal in terms of performance.
+
+Finally, the new idea is simulated to see how it performs in practice. This is an important step, as it allows us to see the real-world performance of the new approach and identify any potential issues or limitations.
 
 \section{Results}
 
@@ -167,11 +192,14 @@ While another approach is to use a bridge gate, which is shown in figure \ref{fi
 
 \section{Challenges}
 
-\begin{itemize}
-\item Interdisciplinary work, a wide range of keywords, a wide range of languages in the papers.
+This project as an interdisciplinary project, has the challenge of the diversity of the literature. There are a vast range of keywords and languages in the papers. 
+And in the first step, to find and understand the literature in this field, the general knowledge of quantum compilation, physical implementations of quantum computers, and classical algorithms for compilation is required.
 
-\item The subtle line between theoretical works and applicability
-\end{itemize}
+The second challenge is the subtle line between theoretical works and implementation efforts. We are in an era that both efforts are meaningful and important. And yet any theoretical work should consider the applicability of the results. Also, any new implementation should be theoretically sound and should be able to be used in the future.
 
+To help to overcome with this challenge, we specified that this, as a master project, shall be a theoretical work. And any implementations will only be for the sake of evaluation and comparison.
+
+Besides these general challenges,
+in the near future, we should be able to understand and generalize all of the efforts in the allocation and routing subproblems of quantum compilation. Which is a huge analytical task. Also, yet we have a small demonstrated improvement and a theoretical proof, we should be able to introduce more powerful results to the field.
 
 \end{document}

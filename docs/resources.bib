@@ -33,6 +33,7 @@
   urldate    = {2022-11-11},
   abstract   = {In May of 2016, {IBM} Research has made a quantum processor available in the cloud to the general public. The possibility of programming an actual quantum device has elicited much enthusiasm. Yet, quantum programming still lacks the compiler support that modern programming languages enjoy today. To use universal quantum computers like {IBM}’s, programmers must design low-level circuits. In particular, they must map logical qubits into physical qubits that need to obey connectivity constraints. This task resembles the early days of programming, in which software was built in machine languages. In this paper, we formally introduce the qubit allocation problem and provide an exact solution to it. This optimal algorithm deals with the simple quantum machinery available today; however, it cannot scale up to the more complex architectures scheduled to appear. Thus, we also provide a heuristic solution to qubit allocation, which is faster than the current solutions already implemented to deal with this problem.},
   annotation = {annotated},
+  comment    = {There is also a thesis by him (with the same name actually!)},
   file       = {Siraichi et al. - 2018 - Qubit allocation.pdf:C\:/Users/sskah/OneDrive/Work/QTech/Project/Resources/Siraichi et al. - 2018 - Qubit allocation.pdf:application/pdf},
   groups     = {General Compilation},
   keywords   = {general},
@@ -376,6 +377,43 @@
   file       = {:allen2001 - Optimizing Compilers for Modern Architectures_ a Dependence Based Approach.html:URL},
   groups     = {Classical Compilation and Resource Allocation},
   shorttitle = {Optimizing {Compilers} for {Modern} {Architectures}},
+}
+
+ 
+@Article{cowtan2019,
+  author     = {Cowtan, Alexander and Dilkes, Silas and Duncan, Ross and Krajenbrink, Alexandre and Simmons, Will and Sivarajah, Seyon},
+  date       = {2019},
+  title      = {On the qubit routing problem},
+  doi        = {10.4230/LIPIcs.TQC.2019.5},
+  note       = {arXiv:1902.08091 [quant-ph]},
+  pages      = {32 pages},
+  url        = {http://arxiv.org/abs/1902.08091},
+  urldate    = {2023-02-03},
+  abstract   = {We introduce a new architecture-agnostic methodology for mapping abstract quantum circuits to realistic quantum computing devices with restricted qubit connectivity, as implemented by Cambridge Quantum Computing's tket compiler. We present empirical results showing the effectiveness of this method in terms of reducing two-qubit gate depth and two-qubit gate count, compared to other implementations.},
+  annotation = {Comment: v2: wrong chart replaced with correct version; minor edits for clarity},
+  file       = {:cowtan2019 - On the Qubit Routing Problem.pdf:PDF},
+  keywords   = {Quantum Physics, Computer Science - Data Structures and Algorithms, Computer Science - Programming Languages},
+}
+
+ 
+@Article{shende2006,
+  author       = {Shende, Vivek V. and Bullock, Stephen S. and Markov, Igor L.},
+  date         = {2006-06},
+  journaltitle = {IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems},
+  title        = {Synthesis of {Quantum} {Logic} {Circuits}},
+  doi          = {10.1109/TCAD.2005.855930},
+  issn         = {0278-0070, 1937-4151},
+  note         = {arXiv:quant-ph/0406176},
+  number       = {6},
+  pages        = {1000--1010},
+  url          = {http://arxiv.org/abs/quant-ph/0406176},
+  urldate      = {2023-02-03},
+  volume       = {25},
+  abstract     = {We discuss efficient quantum logic circuits which perform two tasks: (i) implementing generic quantum computations and (ii) initializing quantum registers. In contrast to conventional computing, the latter task is nontrivial because the state-space of an n-qubit register is not finite and contains exponential superpositions of classical bit strings. Our proposed circuits are asymptotically optimal for respective tasks and improve published results by at least a factor of two. The circuits for generic quantum computation constructed by our algorithms are the most efficient known today in terms of the number of expensive gates (quantum controlled-NOTs). They are based on an analogue of the Shannon decomposition of Boolean functions and a new circuit block, quantum multiplexor, that generalizes several known constructions. A theoretical lower bound implies that our circuits cannot be improved by more than a factor of two. We additionally show how to accommodate the severe architectural limitation of using only nearest-neighbor gates that is representative of current implementation technologies. This increases the number of gates by almost an order of magnitude, but preserves the asymptotic optimality of gate counts.},
+  annotation   = {Comment: 18 pages; v5 fixes minor bugs; v4 is a complete rewrite of v3, with 6x more content, a theory of quantum multiplexors and Quantum Shannon Decomposition. A key result on generic circuit synthesis has been improved to {\textasciitilde}23/48*4{\textasciicircum}n CNOTs for n qubits},
+  file         = {:shende2006 - Synthesis of Quantum Logic Circuits.pdf:PDF},
+  groups       = {Bridge Gate},
+  keywords     = {Quantum Physics},
 }
 
 @Comment{jabref-meta: databaseType:biblatex;}

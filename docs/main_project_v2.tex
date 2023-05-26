@@ -1,0 +1,59 @@
+\documentclass{book}
+
+\usepackage{biblatex}
+\addbibresource{resources.bib}
+
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\usetikzlibrary{quantikz}
+
+\usepackage{physics}
+\usepackage{amsthm}
+
+\title{2QANIM: 2QAN Compiler Improved}
+\author{S. S. Kahani}
+
+\newtheorem{defn}{Definition}
+\newtheorem{thrm}{Theorem}
+\newtheorem{prob}{Problem}
+\def\F{\mathcal{F}}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+\end{abstract}
+
+\section{Introduction}
+
+Since the earliest known conceptualization of the quantum computation~\cite{feynman1982} it was susciptable that quantum computers could possibly revolutionize the way we solve problems, specially the problems of simulating nature. By now, we are aware that the applications of quantum computers are way beyond the physical simulations. There are algorithms for search and traversing graphs, solving linear equations~\cite{montanaro2016}, as well as methods for machine learning and optimization~\cite{jordan_quantum_algorithms_zoo_TODO}.
+
+But yet, despite all of the efforts, we are still far from utilizing the full potential of these algorithms. In terms of the technology of the hardware, we didn't achieve the desired accuracy and number of qubits, so that quantum computers could outperform classical computers in solving a useful problem. The current situation is often called the ``noisy intermediate scale quantum'' (NISQ) era. In this era, the main two barriers for running a general quantum algorithm are the effect of noises (especially for entangling gates) and decoherence time, which limits the depth of the circuit for the algorithm~\cite{preskill2018}.
+
+It is believed that some of the algorithms can still be used to create values on the NISQ era devices. Quantum Variational Algorithms, as well as some of the simulations algorithms are the promising candidates for this purpose~\cite{preskill2018, langione2019}. As a result, a problem-specific approach in any of the building blocks of a quantum computer, including the compilation of the algorithms, would be beneficial in the short-term.
+
+In this thesis we focus on the compilation of the Hamiltonians, which play an important role in QAOA, simulations and many other algorithms. 
+
+\section{Background}
+
+\subsection{Classical Compilation}
+
+The process of compilation in the classical computers, is a little bit different from the quantum compilation. While both of them are defined as the process of transforming a program from one representation to another, the source representation in the classical compilation is a text, (a sequence of characters), while in the quantum compilation is often a set of unitary matrices, possibly with some free parameters. But yet the target in both of them is a sequence of instructions (from a limited set) for the hardware.
+
+The classical compilers are usually divided into two phases, parsing and code generation...
+
+\subsection{Quantum Compilation}
+
+
+\section{Literature Review}
+
+
+\section{Discussion}
+
+The improved compiler, will be studied through its main features.
+
+\subsection{Intermediate Gate Representation}
+
+In the intermediate representation, 
+
+\end{document}

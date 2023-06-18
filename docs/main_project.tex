@@ -319,139 +319,212 @@ Even general quantum circuits may have a small degree of freedom in the order of
 
 Several heuristic algorithms have been proposed in the literature for both Hamiltonians~\cite{lao2021} and the general case~\cite{zhou2020, zulehner2018}.
 
-\chapter{Open Problems and Related Questions}\label{chap:open_problems}
-
-We encountered several open problems and related questions while working on Hamiltonian compilation, which are listed below along with brief notes on our thoughts about them.
-
-\begin{itemize}
-  \item \textbf{Optimality of Bridge Gates}: It has been shown that the bridge gate for $n$ qubits has a depth and number of CNOT gates of $4n + O(1)$. This is equivalent to $3n + O(1)$ and $6n + O(1)$, respectively, for the naive SWAP gates, indicating that one of them is better in terms of depth and the other outperforms in the number of CNOT gates.
-
-  We have already shown that there is another design for bridge gates with $4n + O(1)$ and $n + O(1)$, and furthermore, it is optimal.
-
-  \item \textbf{Bridging Other Two-Qubit Gates}: The bridge gate is currently only defined for CNOT gates. The question is whether it is possible to define a bridge gate for all two-qubit gates.
-  
-  We have shown that there is a SWAP bridge gate for three qubits that requires $8$ CNOT gates, rather than the naive $9$ CNOT gates. Surprisingly, it could not be generalized, and the naive SWAPs are asymptotically optimal.
-
-  \item \textbf{Defining Problems on Hamiltonian Graph}: We already know that a device graph, due to the restrictions imposed by the physical hardware, is not much like an arbitrary graph and could be represented by simpler structures than graphs (like indices of the lattice, etc.). For the compilation of Hamiltonians, we also have another graph, the Hamiltonian graph, which is a hypergraph with a hyperedge for each Hamiltonian term. If we can define the problems on the Hamiltonian graph rather than the device graph, it may be easier to solve them. 
-
-  Currently, we are working on Hamiltonian graph coloring as a way to group the gates of Suzuki-Trotter decomposition into layers. We are hopeful that this approach will help solve 
-  allocation and scheduling subproblems.
-  
-\end{itemize}
-
 \chapter{Discussion and Results}\label{chap:discussion}
 
-The problem of Hamiltonian compilation could be define rigorously as follows.
+\section{Bridging}
+\subsection{Optimal Bridge Theorem}
 
-\begin{problem}[Hamiltonian Compilation]
-  Given a Hamiltonian $H$ and a device graph $G$, find a circuit $C$ that approximates the evolution of $H$ on $G$.
-\end{problem}
+As we have already defined the bridge gate for CNOT, we can extend it to any two-qubit gate. Therefore a bridge gate is a circuit consisting of two-qubit gates that acts like $U \in \mathcal{H}^{\otimes 2}$ on the first and last qubits, and the identity on the rest of the qubits.
 
-Generally, 
+Note that from a simple argument of light cone, we can conclude that the bridge gate must have two chains of $(1, 2), \dots ,(n-1, n)$ and $(n-1, n), \dots, (1, 2)$ gates.
 
-As like as the classical compilation, the quantum compilation problem, where we here narrow it down to the Hamiltonian compilation, is a complex problem that requires a breakdown in order to analyze it properly. In this chapter, we first discuss the problem and its subproblems, then we present our improvements on the baseline results of the literature.
+This two chain may intercept (by the definition below) at any qubit between $1$ and $n$, making one of these shapes
 
-% https://www.cambridge.org/core/books/quantum-computing-for-programmers/quantum-languages-compilers-and-tools/B4BAB6AA290DA9A36F1B5EB85845B814
-
-
-% TODO HERE
-Here we introduce a hardware-aware compiler, starts from a 2-local Hamiltonian, defined in Definition \ref{defn:2-local-hamiltonian}, allocates qubits and generates intermediate gates that are studied in Section \ref{sec:two-qubit-gates} and finally transpile them to a lower-level gate-set. This compiler aims to reduce error in a reasonable compile-time, Therefore a detailed description of the assumed error model is given in Section \ref{sec:error-model}.
 
 \begin{figure}[h]
+  \label{fig:intersections}
   \centering
-\begin{tikzpicture}[auto, node distance= 2.5cm,>=latex']
-  \tikzstyle{block} = [draw, rectangle, text width=4cm, align=center, minimum height=2cm];
-  \tikzstyle{rblock}=[block, rounded corners=1cm];
-  \node [rblock] (a) {Start with $H$};
-  \node [block, below of=a] (b) {\textbf{Preprocess} \\ Apply Trotter-Suzuki decomposition to $H$};
-  \node [block, below of=b] (c) {\textbf{Allocation} \\
-  Allocate qubits based on the connectivity and fidelities};
-  \node [block, below of=c] (d) {\textbf{Intermediate Compilation} \\
-  Generate intermediate gates};
-  \node [block, below of=d] (e) {\textbf{Device Specific Compilation} \\
-  Transpile to device-specific gates};
-  \draw [->] (a) -- (b);
-  \draw [->] (b) -- (c);
-  \draw [->] (c) -- (d);
-  \draw [->] (d) -- (e);
-\end{tikzpicture}
-\caption{The overview of the compilation process in 2QANIM}
-\end{figure}
-
-
-In the literature of quantum computing, there is an implementation of $\mathrm{CNOT}$ gate for non-adjacent qubits that share a neighbour, which is called bridge gate~\cite{shende2006,itoko2019}. This implementation is shown in Figure~\ref{fig:3_socalled_bridge}.
-
-% \def\qceq{\midstick[3,brackets=none]{=}}
-% \begin{figure}[h]
-% \centering
-% \begin{quantikz}
-%   \lstick{q_1} & \qw &\ctrl{2}&\qw\qceq&\ctrl{1}& \qw    &\ctrl{1}& \qw    & \qw \\
-%   \lstick{q_2} & \qw & \qw    & \qw    &\targ{} &\ctrl{1}& \targ{}&\ctrl{1}& \qw \\
-%   \lstick{q_3} & \qw &\targ{} & \qw    & \qw    &\targ{} & \qw    & \targ{}& \qw \\
-% \end{quantikz}
-% \label{fig:3_socalled_bridge}
-% \caption{The bridge gate implementation of $\mathrm{CNOT}$ gate.}
-% \end{figure}
-
-The importance of such an implementation will be clear when we compare it to the baseline implementation, using the $\mathrm{SWAP}$ gates. The baseline implementation is shown in Figure~\ref{fig:3_baseline_impl}.
-
-\begin{figure}[h]
-  \centering
-  % \begin{quantikz}
-  % \lstick{q_1} & \ctrl{2} & \qw \qceq & \swap{1} & \qw & \swap{1} & \qw\qceq & \ctrl{1} & \targ{} & \ctrl{1} & \qw &\ctrl{1} & \targ{} & \ctrl{1} & \qw \\
-  % \lstick{q_2} & \qw & \qw & \swap{} & \ctrl{1} & \swap{} & \qw & \targ{} & \ctrl{-1}& \targ{} & \ctrl{1} & \targ{} & \ctrl{-1}& \targ{} & \qw \\
-  % \lstick{q_3} & \targ{} & \qw  & \qw & \targ{} & \qw & \qw & \qw & \qw & \qw & \targ & \qw & \qw & \qw & \qw \\
-  % \end{quantikz}
-  \label{fig:3_baseline_impl}
-  \caption{The baseline implementation of $\mathrm{CNOT}$ gate.}
-\end{figure}
-
-In this paper, we study the possible extenstion the bridge implementation for an arbitrary distance and arbitrary two-qubit gate.
-
-\subsection*{Bridging CNOT gate}
-
-\def\qceq{\midstick[6,brackets=none]{=}}
-  \begin{definition}{Generalized Bridge Gate}
-    For an even $n$
-    \begin{align*} \mathrm{Bridge}(1, n) = &\prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i + 1, i)\mathrm{CNOT}(n - i + 1, n - i) \\ & \prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i, i + 1)\mathrm{CNOT}(n - i, n - i + 1) \\ & \mathrm{Bridge}(n/2 - 1, n/2)  \\
-    & \qty(\prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i + 1, i)\mathrm{CNOT}(n - i + 1, n - i))^\dagger \\ 
-    & \qty(\prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i, i + 1)\mathrm{CNOT}(n - i, n - i + 1))^\dagger
-    \end{align*}
-    but for an odd $n$, it is a little bit different.
-  \end{definition}
-
-  \begin{figure}[h]
-    \centering
+  a)
 \begin{quantikz}
-\qw &\ctrl{5}&\qw\qceq&\targ{}  & \qw     &\ctrl{1}& \qw    & \qw    & \qw    &\ctrl{1}& \qw     &\targ{}&\qw\\
-\qw & \qw    & \qw    &\ctrl{-1}&\targ{}  & \targ{}&\ctrl{1}& \qw    &\ctrl{1}&\targ{} &\targ{}  &\ctrl{-1}&\qw\\
-\qw & \qw    & \qw    & \qw     &\ctrl{-1}& \qw    & \targ{}&\ctrl{1}&\targ{} & \qw    &\ctrl{-1}&\qw & \qw \\
-\qw & \qw    & \qw    & \qw     &\targ{}  & \qw    &\ctrl{1}& \targ{}&\ctrl{1}& \qw    &\targ{}  &\qw & \qw\\
-\qw & \qw    & \qw    &\targ{}  &\ctrl{-1}&\ctrl{1}& \targ{}& \qw    &\targ{} &\ctrl{1}&\ctrl{-1}&\targ{}&\qw \\
-\qw &\targ{} & \qw    &\ctrl{-1}& \qw     & \targ{}& \qw    & \qw    & \qw    &\targ{} & \qw     &\ctrl{-1}& \qw 
+  \qw & \qw & \gate[wires=2]{B} & \qw & \qw \\
+  \qw & \gate[wires=2]{A} & \qw & \gate[wires=2]{C} & \qw \\
+  \qw & \qw & \qw & \qw & \qw
 \end{quantikz}
-\caption{The bridge gate for $n=6$}
+  b)
+\begin{quantikz}
+  \qw & \gate[wires=2]{A} & \qw & \gate[wires=2]{C} & \qw \\
+  \qw & \qw & \gate[wires=2]{B} & \qw & \qw \\
+  \qw & \qw & \qw & \qw & \qw
+\end{quantikz}
+\caption{Possible intersections of two chains of the bridge gate}
 \end{figure}
 
+We stick to the case b, and we know that they are equivalent upto changing numbers.
 
-  As far as we know, the family of bridge gates with more than one qubit in the chain is not studied yet, and neither implemented in any quantum compiler. 
-  It can be easily shown that for a simple case like the one in the figure \ref{fig:bridge-simplification} that we need to swap and return the qubits, using bridge gate can reduce both depth and number of gates. 
+Also, from the assumption that there are only two chains and nothing will be applied on these three qubits, these three gates then must act trivially on the middle qubit and like a two-qubit gate on the first and last qubits.
 
-  \begin{figure}[h]
-    a) \\
-    \begin{center}
-    \includegraphics[width=0.9\textwidth]{../code/expm_1_bridge/out/original_circuit}
-    \end{center}
-    b) \\
-    \includegraphics[width=0.9\textwidth]{../code/expm_1_bridge/out/transpiled_circuit_swap} \\
-    c) \\
-    \includegraphics[width=0.9\textwidth]{../code/expm_1_bridge/out/transpiled_circuit_bridge}
-    \caption{a) The original circuit, consisting of some local operations, then a far away CNOT and then some local operations. b) The circuit after transpiling using Qiskit. c) The circuit after transpiling using bridge gate as an intermediate gate.}
-  \end{figure}
+Note that the two-qubit gate (that is being sensed on the first and the last) can be decomposed using Kraus-Cirac decomposition, by applying local unitaries on the first and last qubits, to the following form
 
-    Later we prove that this circuit is optimal.
+\begin{equation}
+  (L_1 \otimes L_3) (ABC) (L_1' \otimes L_3') = e^{i(\alpha X_1\otimes X_3 + \beta Y_1 \otimes Y_3 + \gamma Z_1 \otimes Z_3)}
+\end{equation}
 
-\subsection*{Bridging SWAP gate}
+Because of the arbitrariness of $A$, $B$ and $C$ we can digest the $L_i$s into them, and we ask
+
+\begin{equation}
+  ABC = e^{i(\alpha^{(3)} X_1\otimes X_3 + \alpha^{(2)} Y_1 \otimes Y_3 + \alpha^{(3)} Z_1 \otimes Z_3)}
+\end{equation}
+
+Now on the other hand, $B$ can be decomposed by Schmidt decomposition into 
+
+\begin{equation}
+  B = \beta^{(1)} \otimes V^{(1)}_2 I_3 + \beta^{(2)} \otimes V^{(2)}_2 X_3 + \beta^{(3)} \otimes V^{(3)}_2 Y_3 + \beta^{(4)} \otimes V^{(4)}_2 Z_3
+\end{equation}
+
+If we think of $B$ as a vector in a compound space $\mathcal{LH}_1 \otimes \mathcal{LH}_2 \otimes \mathcal{LH}_3$ with innerproduct $\braket{A}{B} = \tr(A^\dagger B)$, then we can write
+
+\begin{equation}
+  \ket{B} = \ket{I} \qty(\beta^{(1)} \ket{V^{(1)}}\ket{I} + \beta^{(2)} \ket{V^{(2)}}\ket{X} + \beta^{(3)} \ket{V^{(3)}}\ket{Y} + \beta^{(4)} \ket{V^{(4)}}\ket{Z})
+\end{equation}
+
+then we can think of $B \to ABC$ as a unitary map called $S$
+
+\begin{equation}
+  S\ket{B} = \beta^{(1)} S(\ket{I}\ket{V^{(1)}})\ket{I} + \beta^{(2)} S(\ket{I}\ket{V^{(2)}})\ket{X} + \beta^{(3)} S(\ket{I}\ket{V^{(3)}})\ket{Y} + \beta^{(4)} S(\ket{I}\ket{V^{(4)}})\ket{Z}
+\end{equation}
+
+that we want it to be
+\begin{equation}
+  S\ket{B} = \ket{e^{i(\alpha X_1\otimes X_3 + \beta Y_1 \otimes Y_3 + \gamma Z_1 \otimes Z_3)} \otimes I_2} = \gamma^{(1)} \ket{III} + \gamma^{(2)} \ket{XIX} + \gamma^{(3)} \ket{YIY} + \gamma^{(4)} \ket{ZIZ}
+\end{equation}
+
+by applying any of $\bra{I}_3$, $\bra{X}_3$, $\bra{Y}_3$ or $\bra{Z}_3$ to both equations, we get
+
+\begin{equation}
+  \begin{cases}
+    \beta^{(1)} S(\ket{I}\ket{V^{(1)}}) = \gamma^{(1)} \ket{II} \\
+    \beta^{(2)} S(\ket{I}\ket{V^{(2)}}) = \gamma^{(2)} \ket{IX} \\
+    \beta^{(3)} S(\ket{I}\ket{V^{(3)}}) = \gamma^{(3)} \ket{IY} \\
+    \beta^{(4)} S(\ket{I}\ket{V^{(4)}}) = \gamma^{(4)} \ket{IZ}
+  \end{cases}
+\end{equation}
+
+Note that by two local operations on the middle qubit, before and after the gate $B$, we can map $V^{(i)}$s to $I$ and $X$, $Y$ and $Z$ (that we call them $P^{(i)}$). If we call that operation as $R$, and its corresponding unitaries as $\Theta$ and $\Theta'$ then we have
+
+\begin{equation}
+  SR^\dagger \ket{IP^{(i)}} = \ket{P^{(i)} I}
+\end{equation}
+
+Now, if we define swap-pair set of any arbitrary unitary operation $U$ as
+\begin{equation}
+  \mathrm{SPS}(U) = \{ (X, Y) | X(I \otimes U)Y = U \otimes I \}
+\end{equation}
+
+then, we are asking
+
+\begin{equation}
+  (A \Theta_2, \Theta'_2 B) \in \mathrm{SPS}(P_i) \forall i
+\end{equation}
+  
+where it is easy to show that $\mathrm{SPS}(I) = \{ (S, S^\dagger) | \forall S \}$.
+
+Finally, we can show that if $(S, S^\dagger) \in \mathrm{SPS}(Z)$
+
+\begin{equation}
+  \begin{aligned}
+  &S(I \otimes Z) = (Z \otimes I) S \\
+  \rightarrow &\begin{cases}
+    S\ket{00} = (Z \otimes I) S\ket{00} \\
+    - S\ket{01} = (Z \otimes I) S\ket{01} \\
+    S\ket{10} = (Z \otimes I) S\ket{10} \\
+    - S\ket{11} = (Z \otimes I) S\ket{11}
+  \end{cases} \\
+  \rightarrow &\begin{cases}
+    S\ket{00} = \ket{0}\ket{\psi_{00}} \\
+    S\ket{01} = \ket{1}\ket{\psi_{01}} \\
+    S\ket{10} = \ket{0}\ket{\psi_{10}} \\
+    S\ket{11} = \ket{1}\ket{\psi_{11}}
+  \end{cases} \\
+  \end{aligned}
+\end{equation}
+
+Noting that $\braket{\psi_{00}}{\psi_{10}}$ and $\braket{\psi_{01}}{\psi_{11}}$ are zero, there are these two maps then
+
+\begin{equation}
+  \begin{cases}
+  W\ket{\psi_{00}} = \ket{0} \\
+  W\ket{\psi_{10}} = \ket{1} \\
+  WV\ket{\psi_{01}} = \ket{0} \\
+  WV\ket{\psi_{11}} = \ket{1}
+  \end{cases}
+\end{equation}
+
+Finally, 
+\begin{equation}
+  S = \mathrm{SWAP}_{1,2} ~ W ~ \mathrm{CV}_{1\to 2}
+\end{equation}
+
+which clearly shows that $A$ and $B$ (that are $S \Theta^\dagger_2$ and $\Theta'^\dagger_2 S^\dagger$) are made of $2$ or $3$ CNOT and have rank $4$.
+
+By induction, we can expand this argument to all of the gates in the circuit, showing th lower bound of $4n$ CNOTs any bridging.
+
+% TODO generalize it as something like below
+% It has been shown that the bridge gate for $n$ qubits has a depth and number of CNOT gates of $4n + O(1)$. This is equivalent to $3n + O(1)$ and $6n + O(1)$, respectively, for the naive SWAP gates, indicating that one of them is better in terms of depth and the other outperforms in the number of CNOT gates.
+
+% We have already shown that there is another design for bridge gates with $4n + O(1)$ and $n + O(1)$, and furthermore, it is optimal.
+
+
+\subsection{Other Bridging Ansatzs}
+
+Assume the following circuit that we call it $G_{XY/ZX}$
+
+\begin{quantikz}
+  \qw & \gate[2]{e^{iX_1 Y_2\theta_1}} & \qw & \gate[2]{e^{-iX_1 Y_2\theta_1}} & \qw  \\
+  \qw &  & \gate[2]{e^{iZ_2 X_3\theta_2}} &  & \gate[2]{e^{-iZ_2 X_3\theta_2}} & \qw  \\
+  \qw & \qw &  & \qw & & \qw 
+\end{quantikz}
+
+We can simplify this cicuit as 
+\begin{equation}
+\begin{aligned}
+  G &= e^{-iZ_2 X_3 \theta_2} e^{-iX_1 Y_2 \theta_1} e^{iZ_2 X_3 \theta_2} e^{iX_1 Y_2 \theta_1} \\
+  &= (I \cos\theta_2 - iZ_2 X_3 \sin\theta_2) (I \cos\theta_1 - iX_1 Y_2 \sin\theta_1) (I \cos\theta_2 + iZ_2 X_3 \sin\theta_2) (I \cos\theta_1 + iX_1 Y_2 \sin\theta_1) \\
+  &= I \cos^2\theta_1\cos^2\theta_2 - iZ_2 X_3 \sin\theta_2 \cos^2\theta_1 \cos\theta_2 - iX_1 Y_2 \sin\theta_1 \cos^2\theta_2 \cos\theta_1 \\
+  &\phantom{I \cos^2\theta_1\cos^2\theta_2 } + iZ_2 X_3 \sin\theta_2 \cos^2\theta_1 \cos\theta_2 + iX_1 Y_2 \sin\theta_1 \cos^2\theta_2 \cos\theta_1 \qquad (\mathcal{O}(1) + \mathcal{O}(\sin)) \\ 
+  &\phantom{=} + (-1)X_1(-iX_2)X_3 \sin\theta_1 \sin\theta_2 \cos\theta_1 \cos\theta_2 + I \cos^2\theta_1 \sin^2\theta_2 \\ 
+  &\phantom{=} + X_1(-iX_2)X_3 \sin\theta_1 \sin\theta_2 \cos\theta_1 \cos\theta_2 + X_1(iX_2)X_3 \sin\theta_1 \sin\theta_2 \cos\theta_1 \cos\theta_2 \\
+  &\phantom{=} + I \sin^2\theta_1 \cos^2\theta_2 + (-1)X_1(-iX_2)X_3 \sin\theta_1 \sin\theta_2 \cos\theta_1 \cos\theta_2  \qquad (\mathcal{O}(\sin^2))\\ 
+  &\phantom{=}  -iZ_2 X_3 \sin^2\theta_1 \sin\theta_2 \cos\theta_2 + iX_1 Y_2 \sin^2\theta_2 \sin\theta_1 \cos\theta_1 \\
+  &\phantom{=} -iZ_2 X_3 \sin^2\theta_1 \sin\theta_2 \cos\theta_2 + iX_1Y_2 \sin^2\theta_2 \sin\theta_1 \cos\theta_1 \qquad (\mathcal{O}(\sin^3)) \\ 
+  &\phantom{=} - I\sin^2 \theta_1 \sin^2 \theta_2 \qquad (\mathcal{O}(\sin^4)) \\ 
+\end{aligned}
+\end{equation}
+
+\begin{equation}
+  \boxed{\begin{aligned}
+G &= I (\cos^2\theta_1\cos^2\theta_2 + \sin^2\theta_1 \cos^2\theta_2 + \cos^2\theta_1 \sin^2\theta_2 - \sin^2 \theta_1 \sin^2 \theta_2) \\
+&\phantom{=} + 2i X_1 X_2 X_3 \sin\theta_1 \sin\theta_2 \cos\theta_1 \cos\theta_2 \\
+&\phantom{=} + 2i X_1 Y_2 \sin^2\theta_2 \sin\theta_1 \cos\theta_1 - 2i Z_2 X_3 \sin^2\theta_1 \sin\theta_2 \cos\theta_2 
+\end{aligned}}
+\end{equation}
+
+
+The first attempt to remove $X_2$ is to change $Y_2$ and $Z_2$ to other matrices that $Y_2 Z_2 = I$ and $Z_2 Y_2 = -I$ which is impossible.
+
+
+
+\clearpage
+
+\section{Comparison of Algorithms in a Wierd Limit}
+
+In the limit of fully-connected device, these algorithms (of trotterizing Hamiltonians) will solve the coloring problem.
+
+QDRIFT works as a random solution and 2QAN doesn't specify how does it work in that scenario.
+
+
+\clearpage
+
+% \item \textbf{Bridging Other Two-Qubit Gates}: The bridge gate is currently only defined for CNOT gates. The question is whether it is possible to define a bridge gate for all two-qubit gates.
+% TODO: make sure to cover all these things.
+
+% We have shown that there is a SWAP bridge gate for three qubits that requires $8$ CNOT gates, rather than the naive $9$ CNOT gates. Surprisingly, it could not be generalized, and the naive SWAPs are asymptotically optimal.
+
+% TODO the fact that bridge (for cnot) is not implemented in any compiler
+
+% \item \textbf{Defining Problems on Hamiltonian Graph}: We already know that a device graph, due to the restrictions imposed by the physical hardware, is not much like an arbitrary graph and could be represented by simpler structures than graphs (like indices of the lattice, etc.). For the compilation of Hamiltonians, we also have another graph, the Hamiltonian graph, which is a hypergraph with a hyperedge for each Hamiltonian term. If we can define the problems on the Hamiltonian graph rather than the device graph, it may be easier to solve them. 
+
+% Currently, we are working on Hamiltonian graph coloring as a way to group the gates of Suzuki-Trotter decomposition into layers. We are hopeful that this approach will help solve 
+% allocation and scheduling subproblems.
 
 \subsection*{Bridging arbitrary gates}
 
@@ -512,152 +585,7 @@ In another words
   +i \sin(\alpha)\sin(\beta)\sin(\gamma)
 \end{align}
   
-% a general two qubit gate
-\begin{quantikz}
-  \qw & \gate[2]{e^{iX_1 Y_2\theta_1}} & \qw & \gate[2]{e^{-iX_1 Y_2\theta_1}} & \qw  \\
-  \qw &  & \gate[2]{e^{iZ_2 X_3\theta_2}} &  & \gate[2]{e^{-iZ_2 X_3\theta_2}} & \qw  \\
-  \qw & \qw &  & \qw & & \qw 
-\end{quantikz}
-
-We can simplify this cicuit as 
-\begin{align}
-  \text{circuit} &= e^{-iZ_2 X_3 \theta_2} e^{-iX_1 Y_2 \theta_1} e^{iZ_2 X_3 \theta_2} e^{iX_1 Y_2 \theta_1} \\
-  &= (I \cos\theta_2 - iZ_2 X_3 \sin\theta_2) (I \cos\theta_1 - iX_1 Y_2 \sin\theta_1) (I \cos\theta_2 + iZ_2 X_3 \sin\theta_2) (I \cos\theta_1 + iX_1 Y_2 \sin\theta_1) \\
-  &= I \cos^2\theta_1\cos^2\theta_2 - iZ_2 X_3 \sin\theta_2 \cos^2\theta_1 \cos\theta_2 - iX_1 Y_2 \sin\theta_1 \cos^2\theta_2 \cos\theta_1 + iZ_2 X_3 \sin\theta_2 \cos^2\theta_1 \cos\theta_2 + iX_1 Y_2 \sin\theta_1 \cos^2\theta_2 \cos\theta_1 + \\ % 0th and 1st order in sins
-  & (-1)X_1(-iX_2)X_3 \sin\theta_1 \sin\theta_2 \cos\theta_1 \cos\theta_2 + I \cos^2\theta_1 \sin^2\theta_2 + X_1(-iX_2)X_3 \sin\theta_1 \sin\theta_2 \cos\theta_1 \cos\theta_2 + X_1(iX_2)X_3 \sin\theta_1 \sin\theta_2 \cos\theta_1 \cos\theta_2 + \\
-  & I \sin^2\theta_1 \cos^2\theta_2 + (-1)X_1(-iX_2)X_3 \sin\theta_1 \sin\theta_2 \cos\theta_1 \cos\theta_2 \\ % second order in sins
-  & -iZ_2 X_3 \sin^2\theta_1 \sin\theta_2 \cos\theta_2 + iX_1 Y_2 \sin^2\theta_2 \sin\theta_1 \cos\theta_1 - iZ_2 X_3 \sin^2\theta_1 \sin\theta_2 \cos\theta_2 + iX_1Y_2 \sin^2\theta_2 \sin\theta_1 \cos\theta_1 \\ % third order in sins
-  & - I\sin^2 \theta_1 \sin^2 \theta_2 \\ % fourth order in sins
-  &= I (\cos^2\theta_1\cos^2\theta_2 + \sin^2\theta_1 \cos^2\theta_2 + \cos^2\theta_1 \sin^2\theta_2 - \sin^2 \theta_1 \sin^2 \theta_2) +
-  & 2i X_1 X_2 X_3 \sin\theta_1 \sin\theta_2 \cos\theta_1 \cos\theta_2 + \\
-  & 2i X_1 Y_2 \sin^2\theta_2 \sin\theta_1 \cos\theta_1 - 2i Z_2 X_3 \sin^2\theta_1 \sin\theta_2 \cos\theta_2 \\
-\end{align}
-
 \section{Basic Concepts}
-
-Because of the exponential growth of the number of gates in the compilation of a k-local term \cite{?}, setting $k=2$ is a reasonable choice for NISQ devices. This simplification not only helps us by reducing the number of gates, also enables us to use graph theory to define and analyze the problem, which is not easily possible for higher values of $k$.
-
-Here we introduce our notation for the Hamiltonian.
-
-\begin{definition}[2-local Hamiltonian]
-  \label{defn:2-local-hamiltonian}
-  Defining an $N$-qubit Hilbert space
-  $\mathcal{H} := \otimes_{i=1}^{N} \mathcal{H_i}$, a 2-local Hamiltonian $H$ acting on it will be like
-  \begin{equation}
-    H := \sum_{i=1}^{k} h_i
-  \end{equation}
-  where each $h_i$ is a 2-local term, acting nontrivially on two specific qubits.
-\end{definition}
-\begin{definition}[Graph representation of a Hamiltonian]
-  We will define the graph $G_H(V_H, E_H)$ to represent the Hamiltonian $H$, in a way that for each term $h_i$ in $H$, we have an edge $e_i$ between the two qubits it acts on.
-\end{definition}
-
-The very first step toward the compilation of a 2-local Hamiltonian is to apply the first-order Trotter-Suzuki decomposition \cite{trotter1959} to it. This decomposition is a way to approximate the time evolution of a Hamiltonian by a sequence of gates. 
-% TODO error of trotter
-
-\begin{definition}[Trotter-Suzuki decomposition]
-  \label{defn:trotter-suzuki}
-  The first order Trotter-Suzuki decomposition, decomposes a Hamiltonian $H$, into a set of two-qubit gates $g_i$s which associated with an edge like $e_i$.
-  \begin{equation}
-    \text{Target Gates} := \{ (g_i, e_i) \}
-  \end{equation}
-\end{definition}
-
-The key feature of this decomposition (only the first order) is that the resulting gates can be applied in any order. This arbitrariness is not hold for a general quantum circuit and it may cause an advantage for a problem-specific compiler. % TODO bad wording
-
-% TODO what about higher order Trotter-Suzuki decomposition?
-% TODO see the new paper "Trotter Errors and the Emergence of Chaos in Quantum Simulation"
-
-\section{Intermediate Gate Set}
-
-In order to breakdown the process of compilation, which is surely a complex task, we use an intermediate description of the circuit, in terms of the intermediate gate set.
-
-This gate set is presumed to not be directly available on any device, but rather, it is easy to generate them relatively efficient on a quantum device. It is not wondering that we assume that the intermediate circuit must obey the topology of the device.
-
-While the implementation of one-qubit gates is not challenging, it is convenient to have all of the one-qubit gates, in the set, but for two qubit gates, many restrictions must be applied.
-
-The most important two-qubit gate that is often a part of any gate set is the CNOT gate. And because of the topology of the device, the CNOT might not be available on all pairs of qubits. Therefore we often add SWAP gate to make it possible all the way through the circuit, but optimality of the circuit is questionable in this case. Here we introduce a new gate, which is a generalization of the CNOT gate, which is shown to be more efficient than applying a SWAP gate.
-
-\subsection{Introducing Bridge Gates}
-For a simple case, that we have three qubits, called $a, b, c$, and we want to apply a CNOT gate on $(a, c)$, but the connectivity only allows us to apply a CNOT gate on $(a, b)$ and $(b, c)$, the first solution would be to use a SWAP gate, which is shown in figure \ref{fig:bridge-one-with-swap} (7 gates, depth of 7)
-While another approach is to use a bridge gate, which is shown in figure \ref{fig:bridge-one-with-bridge} (4 gates, depth of 4).
-
-\def\qceq{\midstick[3,brackets=none]{=}}
-\begin{figure}[h]
-  \label{fig:bridge-one-with-swap}
-  \centering
-  \begin{quantikz}
-  \lstick{a} & \ctrl{2} & \qw \qceq & \swap{1} & \qw & \swap{1} & \qw\qceq & \ctrl{1} & \targ{} & \ctrl{1} & \qw &\ctrl{1} & \targ{} & \ctrl{1} & \qw \\
-  \lstick{b} & \qw & \qw & \swap{} & \ctrl{1} & \swap{} & \qw & \targ{} & \ctrl{-1}& \targ{} & \ctrl{1} & \targ{} & \ctrl{-1}& \targ{} & \qw \\
-  \lstick{c} & \targ{} & \qw  & \qw & \targ{} & \qw & \qw & \qw & \qw & \qw & \targ & \qw & \qw & \qw & \qw  & \qw \\
-  \end{quantikz}
-  \caption{Applying a CNOT gate on $(a, c)$ using a SWAP gate}
-\end{figure}
-
-\begin{figure}[h]
-  \label{fig:bridge-one-with-bridge}
-  \centering
-  \begin{quantikz}
-  \lstick{a} & \ctrl{2} & \qw \qceq & \qw & \ctrl{1} & \qw & \ctrl{1} & \qw \\
-  \lstick{b} & \qw & \qw & \ctrl{1} & \targ{} & \ctrl{1}  & \targ{} & \qw \\
-  \lstick{c} & \targ{} & \qw & \targ{} & \qw  & \targ & \qw  & \qw &  \qw \\
-  \end{quantikz}
-  \caption{Applying a CNOT gate on $(a, c)$ using a bridge gate}
-\end{figure}
-
-This example, could be generalized and the bridge gate must be generalized as well. Hereby we define the generalized version of the bridge gate and we show the optimality of the bridge gate in terms of the number of CNOT gates and the depth of the circuit.
-
-\def\qceq{\midstick[6,brackets=none]{=}}
-\begin{definition}{Generalized Bridge Gate}
-  For an even $n$
-  \begin{align*} \mathrm{Bridge}(1, n) = &\prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i + 1, i)\mathrm{CNOT}(n - i + 1, n - i) \\ & \prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i, i + 1)\mathrm{CNOT}(n - i, n - i + 1) \\ & \mathrm{Bridge}(n/2 - 1, n/2)  \\
-  & \qty(\prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i + 1, i)\mathrm{CNOT}(n - i + 1, n - i))^\dagger \\ 
-  & \qty(\prod_{i=1}^{n/2 - 1}\mathrm{CNOT}(i, i + 1)\mathrm{CNOT}(n - i, n - i + 1))^\dagger
-  \end{align*}
-  but for an odd $n$, it is a little bit different.
-\end{definition}
-
-\begin{figure}[h]
-  \centering
-\begin{quantikz}
-\qw &\ctrl{5}&\qw\qceq&\targ{}  & \qw     &\ctrl{1}& \qw    & \qw    & \qw    &\ctrl{1}& \qw     &\targ{}&\qw\\
-\qw & \qw    & \qw    &\ctrl{-1}&\targ{}  & \targ{}&\ctrl{1}& \qw    &\ctrl{1}&\targ{} &\targ{}  &\ctrl{-1}&\qw\\
-\qw & \qw    & \qw    & \qw     &\ctrl{-1}& \qw    & \targ{}&\ctrl{1}&\targ{} & \qw    &\ctrl{-1}&\qw & \qw \\
-\qw & \qw    & \qw    & \qw     &\targ{}  & \qw    &\ctrl{1}& \targ{}&\ctrl{1}& \qw    &\targ{}  &\qw & \qw\\
-\qw & \qw    & \qw    &\targ{}  &\ctrl{-1}&\ctrl{1}& \targ{}& \qw    &\targ{} &\ctrl{1}&\ctrl{-1}&\targ{}&\qw \\
-\qw &\targ{} & \qw    &\ctrl{-1}& \qw     & \targ{}& \qw    & \qw    & \qw    &\targ{} & \qw     &\ctrl{-1}& \qw 
-\end{quantikz}
-  \caption{The bridge gate for $n=6$}
-\end{figure}
-
-\begin{theorem}
-  Assume that we decomposed a CNOT between the first and the last qubits in a chain, in terms of local circuit.
-  This circuit must carry information from the first bit to the last and reverse.
-  For the forward information flow, the information is an $X$ gate placed on the first qubit, will travel along the circuit, so we need to have a consequential $n$ CNOT gates to carry this information. The same argument is valid for a backward series of gates.
-  Ignoring the first and the last qubit, for each qubit this argument is also valid that, the gate in those series must not be the first neither the last CNOT gate applied on the qubit.
-  Therefore, at least we need to have two series, each has to have a range of CNOT gates, before and after.
-  One could easily manage to find out that the simplest structure would be similar (in terms of complexity) to the proposed bridge gate.
-\end{theorem}
-
-
-As far as we know, the family of bridge gates with more than one qubit in the chain is not studied yet, and neither implemented in any quantum compiler. 
-It can be easily shown that for a simple case like the one in the figure \ref{fig:bridge-simplification} that we need to swap and return the qubits, using bridge gate can reduce both depth and number of gates. 
-
-\begin{figure}
-  a) \\
-  \begin{center}
-  \includegraphics[width=0.9\textwidth]{../code/expm_1_bridge/out/original_circuit}
-  \end{center}
-  b) \\
-  \includegraphics[width=0.9\textwidth]{../code/expm_1_bridge/out/transpiled_circuit_swap} \\
-  c) \\
-  \includegraphics[width=0.9\textwidth]{../code/expm_1_bridge/out/transpiled_circuit_bridge}
-  \caption{a) The original circuit, consisting of some local operations, then a far away CNOT and then some local operations. b) The circuit after transpiling using Qiskit. c) The circuit after transpiling using bridge gate as an intermediate gate.}
-\end{figure}
-\subsection{Unifying Gates}
-
-{ \color{blue} TODO }
-We can combine two-qubit gates...
 
 \section{Error Model}
 \label{sec:error-model}

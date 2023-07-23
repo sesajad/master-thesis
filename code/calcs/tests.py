@@ -52,12 +52,31 @@ def order(a):
 
      return i
 
+CNOTR = SWAP @ CNOT @ SWAP
+
 print('SWAP: ', order(SWAP))
 print('CNOT: ', order(CNOT))
 print('X⊗X: ', order(tensorproduct(X, X)))
 
-CNOTR = SWAP @ CNOT @ SWAP
 print('CNOT CNOTR: ', order(CNOT @ CNOTR))
+
+# res = tensorproduct(tensorproduct(I, I), I)
+
+# res = res @ tensorproduct(CNOT, I)
+# res = res @ tensorproduct(I, CNOTR)
+
+# res = res @ tensorproduct(CNOTR, I)
+# res = res @ tensorproduct(I, CNOT)
+
+# res = res @ tensorproduct(CNOT, I)
+# res = res @ tensorproduct(I, CNOTR)
+
+# res = res @ tensorproduct(CNOTR, I)
+# res = res @ tensorproduct(I, CNOT)
+
+# print(partialtrace(res, 1))
+
+
 
 
 

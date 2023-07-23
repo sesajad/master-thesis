@@ -16,6 +16,7 @@
 \newtheorem{definition}{Definition}
 \newtheorem{theorem}{Theorem}
 \newtheorem{problem}{Problem}
+\newtheorem{lemma}{Lemma}
 \def\F{\mathcal{F}}
 
 \title{Compiling Local Hamiltonians}
@@ -330,7 +331,6 @@ Note that from a simple argument of light cone, we can conclude that the bridge 
 
 This two chain may intercept (by the definition below) at any qubit between $1$ and $n$, making one of these shapes
 
-
 \begin{figure}[h]
   \label{fig:intersections}
   \centering
@@ -351,74 +351,96 @@ This two chain may intercept (by the definition below) at any qubit between $1$ 
 
 We stick to the case b, and we know that they are equivalent upto changing numbers.
 
-Also, from the assumption that there are only two chains and nothing will be applied on these three qubits, these three gates then must act trivially on the middle qubit and like a two-qubit gate on the first and last qubits.
-
-Note that the two-qubit gate (that is being sensed on the first and the last) can be decomposed using Kraus-Cirac decomposition, by applying local unitaries on the first and last qubits, to the following form
+We know that any two-qubit gate (such as $B$) could be decomposed into
 
 \begin{equation}
-  (L_1 \otimes L_3) (ABC) (L_1' \otimes L_3') = e^{i(\alpha X_1\otimes X_3 + \beta Y_1 \otimes Y_3 + \gamma Z_1 \otimes Z_3)}
+  B = (L_2 \otimes L_3) (\alpha^{(1)} I_2 I_3 + \alpha^{(2)} X_2 X_3 + \alpha^{(3)} Y_2 Y_3 + \alpha^{(4)} Z_2 Z_3) (L_2' \otimes L_3')
 \end{equation}
 
-Because of the arbitrariness of $A$, $B$ and $C$ we can digest the $L_i$s into them, and we ask
+where $L_i$ and $L_i'$ are local unitaries on the $i$th qubit.
+
+Then, the whole circuit $ABC$ will be equal to 
 
 \begin{equation}
-  ABC = e^{i(\alpha^{(3)} X_1\otimes X_3 + \alpha^{(2)} Y_1 \otimes Y_3 + \alpha^{(3)} Z_1 \otimes Z_3)}
+  ABC = \alpha^{(1)} AL_2 (I_1 I_2) L_2' C \otimes L_3 I_3 L'_3 + \alpha^{(2)} AL_2 (I_1 X_2) L_2' C \otimes L_3 X_3 L'_3 + \dots
 \end{equation}
 
-Now on the other hand, $B$ can be decomposed by Schmidt decomposition into 
+And our final goal is to make a bridge that acts like this for all $U_2$s
 
 \begin{equation}
-  B = \beta^{(1)} \otimes V^{(1)}_2 I_3 + \beta^{(2)} \otimes V^{(2)}_2 X_3 + \beta^{(3)} \otimes V^{(3)}_2 Y_3 + \beta^{(4)} \otimes V^{(4)}_2 Z_3
+  U_2 ABC = ABC U_2
 \end{equation}
 
-If we think of $B$ as a vector in a compound space $\mathcal{LH}_1 \otimes \mathcal{LH}_2 \otimes \mathcal{LH}_3$ with innerproduct $\braket{A}{B} = \tr(A^\dagger B)$, then we can write
+By applying $P^{(i)}_3 L_3^\dagger$ and ${L_3'}^\dagger$ from left and right and then applying $\Tr_3$
 
 \begin{equation}
-  \ket{B} = \ket{I} \qty(\beta^{(1)} \ket{V^{(1)}}\ket{I} + \beta^{(2)} \ket{V^{(2)}}\ket{X} + \beta^{(3)} \ket{V^{(3)}}\ket{Y} + \beta^{(4)} \ket{V^{(4)}}\ket{Z})
+  U_2 \alpha^{(i)} AL_2 (I_1 \otimes P^{(i)}) L_2' C = \alpha^{(i)} AL_2 (I_1 \otimes  P^{(i)}) L_2' C U_2
 \end{equation}
 
-then we can think of $B \to ABC$ as a unitary map called $S$
+Which directly implies
 
 \begin{equation}
-  S\ket{B} = \beta^{(1)} S(\ket{I}\ket{V^{(1)}})\ket{I} + \beta^{(2)} S(\ket{I}\ket{V^{(2)}})\ket{X} + \beta^{(3)} S(\ket{I}\ket{V^{(3)}})\ket{Y} + \beta^{(4)} S(\ket{I}\ket{V^{(4)}})\ket{Z}
+  AL_2 (I_1 \otimes P^{(i)}) L_2' C = V^{(i)} \otimes I
 \end{equation}
 
-that we want it to be
+Note that for all $j, k \in \{1, 2, 3\}$
 \begin{equation}
-  S\ket{B} = \ket{e^{i(\alpha X_1\otimes X_3 + \beta Y_1 \otimes Y_3 + \gamma Z_1 \otimes Z_3)} \otimes I_2} = \gamma^{(1)} \ket{III} + \gamma^{(2)} \ket{XIX} + \gamma^{(3)} \ket{YIY} + \gamma^{(4)} \ket{ZIZ}
+  V^{(j)} V^{(0)\dagger} V_{(k)} V^{(0)\dagger} = AL_2 (I_1 \otimes P^{(i)} P^{(j)}) L_2^\dagger A^\dagger = \sum_k i\epsilon_{jkl} V^{(l)}V^{(0)\dagger}
 \end{equation}
 
-by applying any of $\bra{I}_3$, $\bra{X}_3$, $\bra{Y}_3$ or $\bra{Z}_3$ to both equations, we get
+Here we use a lemma,
+\begin{lemma}[Rotated Paulis]
+  If $V^{(j)}$s are unitaries that
+  \begin{equation}
+    V^{(j)} V^{(0)^\dagger} V^{(k)} V^{(0)^\dagger} = \delta_{jk}I + i\epsilon_{jkl} V^{(l)} V^{(0)^\dagger}
+  \end{equation}
+  then 
+  \begin{equation}
+    V^{(j)} = U P^{(j)} U^\dagger V^{(0)^\dagger}
+  \end{equation}
+  that $U$ is a unitary operation and $P^{(j)}$s are Pauli matrices.
+\end{lemma}
+\begin{proof}
+  If we define $Q^{(j)} = V^{(j)} V^{(0)^\dagger}$, then we have shown that $Q^{(j)}$s are hermitian unitaries that $Q^{(0)} = I$ and $Q^{(j)}Q^{(k)} = \delta_{jk}I + i\epsilon_{jkl} Q^{(k)}$, then $Q^{(j)} = U P^{(j)} U^\dagger$ for some $U$.
+  Therefore, $V^{(j)} = U P^{(j)} U^\dagger V^{(0)^\dagger}$
+\end{proof}
 
+
+So far we have shown that
 \begin{equation}
-  \begin{cases}
-    \beta^{(1)} S(\ket{I}\ket{V^{(1)}}) = \gamma^{(1)} \ket{II} \\
-    \beta^{(2)} S(\ket{I}\ket{V^{(2)}}) = \gamma^{(2)} \ket{IX} \\
-    \beta^{(3)} S(\ket{I}\ket{V^{(3)}}) = \gamma^{(3)} \ket{IY} \\
-    \beta^{(4)} S(\ket{I}\ket{V^{(4)}}) = \gamma^{(4)} \ket{IZ}
+  AL_2 (I_1 \otimes P^{(i)}) L_2' C = U P^{(i)} U^\dagger V^{(0)^\dagger} \otimes I
+\end{equation}
+
+Then, by defining 
+\begin{equation}
+  \begin{cases} S_{12} = U^\dagger AL_2 \\
+    S'_{12} = L_2' C V^{(0)} U
   \end{cases}
 \end{equation}
 
-Note that by two local operations on the middle qubit, before and after the gate $B$, we can map $V^{(i)}$s to $I$ and $X$, $Y$ and $Z$ (that we call them $P^{(i)}$). If we call that operation as $R$, and its corresponding unitaries as $\Theta$ and $\Theta'$ then we have
-
+we can say that
 \begin{equation}
-  SR^\dagger \ket{IP^{(i)}} = \ket{P^{(i)} I}
+  S_{12} (I_1 \otimes P^{(i)}) S'_{12} = P^{(i)} \otimes I
 \end{equation}
 
-Now, if we define swap-pair set of any arbitrary unitary operation $U$ as
-\begin{equation}
-  \mathrm{SPS}(U) = \{ (X, Y) | X(I \otimes U)Y = U \otimes I \}
-\end{equation}
 
-then, we are asking
+Now, if we define swap-pair set
 
-\begin{equation}
-  (A \Theta_2, \Theta'_2 B) \in \mathrm{SPS}(P_i) \forall i
-\end{equation}
-  
-where it is easy to show that $\mathrm{SPS}(I) = \{ (S, S^\dagger) | \forall S \}$.
+\begin{definition}[Swap-Pair Set]
+  swap-pair set for any unitary operation $U$ is defined as
+  \begin{equation}
+    \mathrm{SPS}(U) = \{ (X, Y) | X(I \otimes U)Y = U \otimes I \}
+  \end{equation}
+\end{definition}
 
-Finally, we can show that if $(S, S^\dagger) \in \mathrm{SPS}(Z)$
+
+\begin{lemma}[Swap-Pair Set for $Z$]
+  Any pair that belongs to $\mathrm{SPS}(Z) \cap \mathrm{SPS}(I)$ 
+  can be written as $(\mathrm{SWAP} ~ W ~ \mathrm{CV}, \text{h.c.})$ for some single-qubit gate $W$ and a controlled-$V$ gate.
+\end{lemma}
+\begin{proof}
+Note that it is easy to show that $\mathrm{SPS}(I) = \{ (S, S^\dagger) | \forall S \}$ and 
+Also, we can show that if $(S, S^\dagger) \in \mathrm{SPS}(Z)$
 
 \begin{equation}
   \begin{aligned}
@@ -453,8 +475,21 @@ Finally,
 \begin{equation}
   S = \mathrm{SWAP}_{1,2} ~ W ~ \mathrm{CV}_{1\to 2}
 \end{equation}
+\end{proof}
 
-which clearly shows that $A$ and $B$ (that are $S \Theta^\dagger_2$ and $\Theta'^\dagger_2 S^\dagger$) are made of $2$ or $3$ CNOT and have rank $4$.
+Now, we need to use the lemma to show that $S_{12}$ and $S'_{12}$ are made of $2$ or $3$ CNOTs.
+\begin{equation}
+  (S, S') \in \mathrm{SPS}(P_i) \forall i
+\end{equation}
+  
+which means that
+\begin{equation}
+  \begin{cases} U^\dagger AL_2 = \mathrm{SWAP}_{1,2} ~ W ~ \mathrm{CV}_{1\to 2} \\
+    L_2' C V^{(0)} U = \mathrm{CV^\dagger}_{1\to 2} ~ W^\dagger ~ \mathrm{SWAP}_{1,2}
+  \end{cases}
+\end{equation}
+
+which clearly shows that $A$ and $C$ are made of $2$ or $3$ CNOT and have rank $4$.
 
 By induction, we can expand this argument to all of the gates in the circuit, showing th lower bound of $4n$ CNOTs any bridging.
 

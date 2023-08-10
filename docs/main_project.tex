@@ -37,10 +37,10 @@ Quantum computation (QC) is an emerging field that aims to use quantum mechanics
 
 Despite significant efforts, we are still far from fully utilizing these algorithms. Our current hardware technology has not yet achieved the desired accuracy and number of qubits necessary for quantum computers to outperform classical computers in solving useful problems. The current situation is commonly referred to as the ``noisy intermediate scale quantum'' (NISQ) era~\cite{preskill2018}, characterized by restricted resources, including a limited number of qubits, constrained qubit connectivity, hardware-specific gate sets, and limited circuit depth due to noise \cite{cross2019}.
 
-The restricted qubit resources and excessive noise susceptibility of NISQ devices necessitate optimal compilers to have any hope of useful near-term quantum computation. A huge amount of research has been conducted to tackle different aspects of the compilation problem, including qubit allocation \cite{itoko2019,siraichi2018,paler2019,zhang2021,li2019}, routing \cite{childs,zhou2020,itoko2019,cowtan2019,nash2020,kissinger2019} and gate synthesis \cite{shende2006,vatan2004,tucci2005,vatan2004a,shende2004,khaneja2001}. These aspects are deeply intertwined and one may not distinguish between them, but all of them are in some sense a circuit transformation from a higher-level circuit (with fewer imposed constraints) to a lower-level circuit (with more imposed constraints) \cite{hundt2022}.
+The restricted qubit resources and excessive noise susceptibility of NISQ devices necessitate optimal compilers to have any hope of useful near-term quantum computation. A huge amount of research has been conducted to tackle different aspects of the compilation problem, including qubit allocation \cite{itoko2019,siraichi2018,paler2019,zhang2021,li2019}, routing \cite{childs,zhou2020,itoko2019,cowtan2019,nash2020,kissinger2019} and gate synthesis \cite{shende2006,vatan2004,vatan2004a,shende2004,barenco1995,dawson2006}. These aspects are deeply intertwined and one may not distinguish between them, but all of them are in some sense a circuit transformation from a higher-level circuit (with fewer imposed constraints) to a lower-level circuit (with more imposed constraints) \cite{hundt2022}.
 
 % TODO, improve the information in the following paragraph
-While the knowledge of classical compilation is adopted and the divergent points (no-cloning \cite{TODO} and reversibility \cite{TODO}) are studied and addressed well, another important distinction has received less attention - the cost of SWAP operations. In classical circuit synthesis, SWAPs simply rearrange wires at negligible cost, compared to two-bit gates. But in the quantum realm, SWAP gates require double entangling \cite{TODO} interactions between qubits, making them the most expensive two-qubit quantum logic gates \cite{TODO}.
+While the knowledge of classical compilation is adopted and the divergent points (no-cloning \cite{TODO} and reversibility \cite{shende2003}) are studied and addressed well, another important distinction has received less attention - the cost of SWAP operations. In classical circuit synthesis, SWAPs simply rearrange wires at negligible cost, compared to two-bit gates. But in the quantum realm, SWAP gates require double entangling \cite{TODO} interactions between qubits, making them the most expensive two-qubit quantum logic gates \cite{TODO}.
 
 Despite extensive research into minimizing the overall number of SWAP operations~\cite{childs, TODO}, there is little work addressing the inherent cost of each SWAP gate. A few recent works have proposed techniques to reduce the cost of SWAP gates, such as embedding SWAPs within other 2-qubit gates in 2QAN compiler~\cite{lao2021}, or optimization of SWAP decompositions into CNOT gates~\cite{kissinger2019,nash2020}. In this work, we aim to address the primary usage of SWAP gates - enabling connectivity between non-adjacent qubits. We analyze the possibility of simplifications for different connectivity cases.
 
@@ -54,21 +54,17 @@ The rest of this thesis is organized as follows. Chapter~\ref{chap:background} r
 
 We should be concerned with two key findings from the literature review on quantum compilation. First, the way that they broke down the problem and the assumption they made to simplify the problem space and introducing some structure to that. On the other hand, is the alogrithms that they involve techniques from QC, graph theory and more.
 
-Here we try to review both of these aspects to draw a big picture of our notion of quantum compilation and also to review the existing techniques related to our approach.
-
-We will also briefly discuss network coding and classical compilation for the purpose of self-containedness.
+Here we try to review both of these aspects to draw a big picture of our notion of quantum compilation and also to review the existing techniques related to our approach. We will also briefly discuss network coding and classical compilation for the purpose of self-containedness.
 
 \section{Quantum Compilation}
 
-% General-purpose quantum compilers \cite{cross2022,sivarajah2021,qiskit2023,maronese2021}
+% should I mention something about errors and quantum error correction and how it is related to compilation? (did \cite{maronese2021} doe?)
 
-The term quantum compilation can be referred any process that transforms a higher-level description of a quantum algorithm into a lower-level description~\cite{hundt2022}. Given the current situation in the most of works \cite{TODO}, circuits are the description used and the compilation hence is the process of transforming a general quantum circuit into a circuit that is compatible with a specific hardware. As the problem of finding the most optimal circuit (with respect to a sense of complexity like depth or number of gates) is proven to be NP-hard \cite{TODO}, the main focus of the research is to break down the problem into smaller problems and to develop techniques to reasonably trade-off between the extension of the process and the quality of the solution. This is pretty much the same as the approach that is taken in classical compilation \cite{TODO}.
+The term quantum compilation can be referred any process that transforms a higher-level description of a quantum algorithm into a lower-level description~\cite{hundt2022}. Given the current situation in the most of works \cite{zulehner2018,childs,cross2022,sivarajah2021,qiskit2023,paler2021}, circuits are the description used and the compilation hence is the process of transforming a general quantum circuit into a circuit that is compatible with a specific hardware. As the problem of finding the most optimal circuit (with respect to a sense of complexity like depth or number of gates) is proven to be NP-hard \cite{siraichi2018}, the main focus of the research is to break down the problem into smaller problems and to develop techniques to reasonably trade-off between the extension of the process and the quality of the solution. This is pretty much the same as the approach that is taken in classical compilation \cite{allen2001}.
 
-The breakdown structure still is not well-established and there are many different approaches \cite{} hence we try to sketch a general picture of the problem and the common patterns in the literature. Afterward we use this general picture as a reference for the rest of this thesis. 
+The breakdown structure still is not well-established and there are many different approaches, hence we try to sketch a general picture of the problem and the common patterns in the literature. Afterward we use this general picture as a reference for the rest of this thesis. To define such picture, we need to the define the \textbf{circuit transformation} as a process that preserves the semantics of the circuit, i.e. the output of the circuit on any input will be the same before and after the transformation, while it changes the circuit in order to follow some constraints or to optimize the circuit for some goal.
 
-To define such picure, we need to the define the circuit transformation as a process that preserves the semantics of the circuit, i.e. the output of the circuit on any input will be the same before and after the transformation, while it changes the circuit in order to follow some constraints or to optimize the circuit for some goal.
-
-Then, any quantum compilation process can be seen as a series of circuit transformations that each of them is either imposing a constraint or optimizing the circuit (an optimization itself could be seen as a soft constraint \cite{}). The main constraints that are imposed on the circuit are coming from the hardware and are listed below:
+Then, \textbf{quantum compilation} is a series of circuit transformations that each of them is either imposing a constraint or optimizing the circuit (an optimization itself could be seen as a soft constraint). The main constraints that are imposed on the circuit are coming from the hardware and are listed below:
 
 \begin{itemize}
   \item \textbf{Gate set}: The set of gates physically available in the hardware.
@@ -83,105 +79,33 @@ And the optimizations with respect to different degrees of freedom (like assigni
   \item \textbf{Soft constraints}: The soft constraints associated with one of the constraints above, to be done before the hard constraint is imposed.
 \end{itemize}
 
-For example, qiskit\texttrademark, defines the compilation (transpilation) process, as a series of six passes \cite{TODO}. That corresponds to our general picture as follows:
+These generalization not only include the famous frameworks like qiskit and tket \cite{qiskit2023,sivarajah2021} but also can be used to describe many research papers addressing a specific subproblem of the compilation.
+
+For example, qiskit\texttrademark, defines the compilation (they call it transpilation) process, as a series of six transformations (they call them passes) \cite{qiskit2023}. That corresponds to our general picture as follows:
 
 \begin{enumerate}
   \item Init - Unrolling custom gates into one- and two-qubit gates (imposing constraint of gate set with an intermediate gate set).
-  \item Layout - Maps logical to physical qubits. (Optimization for connectivity constraints)
+  \item Layout - Maps logical to physical qubits. (Optimization of connectivity as a soft constraints)
   \item Routing - Inserts swap gates to satisfy connectivity. (Imposing connectivity constraints)
   \item Translation - Converts to target gate set. (Imposing gate set constraints)
-  \item Optimization - Iteratively optimizes until depth limit reached. (Optimization for reducing two-qubit gates)
+  \item Optimization - Iterative optimization. (Optimization of complexity)
   \item Scheduling - Hardware-aware scheduling. (Imposing scheduling constraints)
 \end{enumerate}
 
-While, the most common order is always to impose connectivity, then gateset and then scheduling constraints \cite{TODO}, there are some exceptions. For example, the work of \cite{wille2020} assumes a different order, and asks all of the constraints to be resloved before the connectivity constraints.
+tket\texttrademark is using constraints as well (they call it predicates), there are a list of common transformations and their corresponding constraints in tket:
 
-% TODO, review the processes: tket, ...
+\begin{enumerate}
+  \item Rebase - Decompose gates to the gate set (Gate set constraints)
+  \item Placement - Mapping to physical qubits (None)
+  \item Routing - Inserting SWAP gates (Connectivity constraints)
+  \item Decomposing Boxes - Decomposing high-level structures that are defined in tket.
+  \item Optimisation - Optimising the circuit (Complexity)
+\end{enumerate}
 
-With this background established, we now dive into details on gate set constraints, connectivity constraints, scheduling constraints, and circuit optimizations techniques for reducing complexity.
-
-\subsection{Gate synthesis}
-
-Imposing the gate set constraints which is known as the gate synthesis, is one of the oldest subroutines in the quantum compilation. The problem here is to decompose a general $n$-qubit gate into a sequence of gates from a universal gate set. It has been proven in the early days of quantum computing that the set of all one-qubit gates (which can be reduced to 2 gates for approximate synthesis \cite{TODO}) with CNOT and TOFFOLI is a choice for universal gate set \cite{barenco1995}. Afterward, the quest for finding the shortest sequence of gates from this universal gate set for a given gate has been a hot topic in the literature \cite{shende2006,vatan2004}.
-
-While there are many other possible choices for universal gate sets \cite{TODO}, and also most of the existing quantum computers need to decompose CNOTs and they are natively using other families of two-qubit gates, such as~\cite{foxen2020}, still, most of the results in the literature are based on the CNOT gate, and it has become a standard for the intermediate representation of quantum circuits, along with the set of one-qubit gates~\cite{zulehner2018,siraichi2018,li2019,zhang2021,zhou2020,itoko2019,murali2019,sivarajah2021}. Although it may be suboptimal for hardware, it is a theoretically well-studied two-qubit gate.
-
-\subsubsection{Hamiltonian Compilation}
-
-\cite{lao2021,campbell2019,childs2021}
-
-The literature on Hamiltonian compilation is currently limited. Even existing compilers have not implemented anything beyond a first-order Suzuki-Trotter decomposition~\cite{sivarajah2021, qiskit2023}. Also, if we consider the Suzuki-Trotter decomposition as a compiler, there are also a few related works that could be considered as a part of the literature, such as an analysis of its error~\cite{childs2021}.
-
-Not all efforts in Hamiltonian compilation are based on the Suzuki-Trotter decomposition. Another approach is to use a randomized compiler based on sampling Hamiltonian terms~\cite{campbell2019}. This method is called QDRIFT protocol and it is briefly described in the theorem below.
-
-\begin{theorem}[QDRIFT Compiler]
-  Given $H = \sum_{j=1}^k h_j$ and an oracle that samples the terms of the Hamiltonian by weight $\frac{\norm{h_i}_\infty}{\sum_{j=1}^k \norm{h_j}_\infty}$, by randomly sampling $N$ terms $\eta_1 \dots \eta_N$, then we can define the approximate evolution as
-  \begin{equation}
-    U(t) = \prod_{i=1}^N e^{it\frac{\eta}{N}\sum_{j=1}^k \norm{h_j}_\infty}
-  \end{equation}
-  where it asymptotically outperform first-order Suzuki-Trotter decomposition in number of gates at a certain level of error.
-\end{theorem}
-
-Our baseline compiler is described in~\cite{lao2021}, which uses the Suzuki-Trotter decomposition and defines routing and scheduling algorithms specifically for Hamiltonian compilation.
-
-The compiler includes two different heuristic search algorithms, one for initial qubit allocation and another for subsequent qubit allocation. The algorithm for subsequent qubit allocation also provides the route (of SWAP gates) for reallocation. This compiler supports all one and two-qubit gates as intermediate gates, which helps simplify the circuit by unifying consecutive two-qubit gates~\cite{lao2021}.
+We can see that while the core idea is the same, there is no agreement on the order, like \cite{wille2020,sivarajah2021} puting gate synthesis before connectivity while \cite{qiskit2023} does it otherwise.
 
 
-
-\subsection{Qubit allocation}
-
-
-The definition of qubit allocation may vary in the literature, but we can roughly define it as below
-
-\begin{problem}[Qubit Allocation]
-  Qubit allocation is the problem of assigning physical qubits of a device to logical qubits of a quantum circuit at each time step to minimize the circuit's complexity.
-\end{problem}
-
-We can see that this problem is similar to problem \ref{prob:register_allocation}.
-
-While qubit allocation is NP-hard for arbitrary connectivity graphs, this can be shown easily by a reduction from graph isomorphism~\cite{siraichi2018}. However, real-world devices are not arbitrary, and by imposing some restrictions on the connectivity graph, we can solve the problem in polynomial time~\cite{childs}. For example, the problem is solvable in polynomial time for path graphs, complete graphs, tree graphs, and product graphs. These results has already been known for similar classical problems like token swapping and routing via matching~\cite{banerjee2017}.
-
-\begin{problem}[Routing via Matching]
-  Given a graph and a set of pebble, each of them at each node, a permutation is given and we need to achive the permutation by moving the pebbles. each move consists of swapping two pebbles at adjacent nodes. The problem is to find the minimum number of moves (a.k.a. routing number).
-\end{problem}
-
-For arbitrary connectivity graphs, there have been attempts to solve the problem, which can be feasible for small devices~\cite{siraichi2018}. The most common approach is to use a heuristic~\cite{zhang2021, itoko2019, cowtan2019} together with a search algorithm (such as BFS, $A^*$\cite{zulehner2018}, simulated annealing\cite{zhou2020}, or others\cite{li2019}) to find a reasonable solution.
-
-In most cases, the treatment of the initial mapping and subsequent mappings is different~\cite{zhou2020, li2019}. This is because while subsequent mappings can be seen as a routing problem in the permutation space, the initial mapping is a search to find the best starting point.
-
-Another approach is to use partial permutations, which allows for the use of the same algorithm for both initial mapping and subsequent mappings~\cite{childs, zulehner2018}.
-
-\begin{definition}[Partial Mapping]
-  A partial mapping, is a partial injective function from the logical qubits to the physical qubits.
-  It means that some of the logical qubits may not be mapped to any physical qubit.
-\end{definition}
-
-Current quantum compilers, such as those used in Qiskit\cite{qiskit2023, cross2022, murali2019} and Tket\cite{sivarajah2021}, use even simpler heuristics, while considering the errors of the device, which is not the case for most papers.
-
-\subsection{Routing}
-
-\subsection{Scheduling}
-
-\subsection{Optimizations}
-
-Circuit optimization is often achieved by applying simplification rules to the circuit~\cite{pointing2021}. These simplification rules are usually based on the commutation relations of the gates~\cite{itoko2019}.
-
-Yet, this simplification rules are implemented as a pattern matching, therefore the hidden patterns that can be revealed by another simplification rules will not be found.
-
-
-TODO:
-\begin{itemize}
-  \item Papers with a focus on inital mapping \cite{siraichi2018,zhang2021,paler2019}
-  \item Papers with a focus on routing problem \cite{childs,zhou2020,itoko2019,cowtan2019}
-  \item Ideas to improve SWAP complexity (embedding from 2QAN and CNOT framework from Kissinger) \cite{lao2021}\cite{nash2020,kissinger2019}
-  \item \sout{Papers with a focus on decomposition of gates and KAK} (maybe) \cite{tucci2005,vatan2004a}
-  \item Papers with a focus on entangling power (maybe) \cite{nielsen2003,berry2002,bennett2002,linowski2020}
-  \item A bit from Network coding \cite{ho2008}
-\end{itemize}
-
-\section{Previous Version (From Literature Review)}
-
-\subsection{Classical Compilation}
+Here worth mentioning classical compilation {
 A detailed study of the principles and heritage of classical compilers could be insightful and influential for any research conducted in the quantum compilation area. Rather than focusing on state-of-the-art results in classical compilation, we will focus on well-established principles to share the experience of classical compilers with quantum compilers.
 
 In the context of executing computer programs, there are two main approaches: interpretation and compilation. Interpretation is the process of processing a program at the time of execution. It means that the processor of the program is aware of the input and the execution environment as well. While compilation refers to the process of transforming a program into another representation before the execution time, so the input and environment are not known at the moment~\cite[p. 2]{aho1986}.
@@ -214,10 +138,25 @@ Yet, the influence of classical compilers on quantum compilers may not be limite
 \begin{problem}[Code Motion]
   Code motion is the process of moving code to a different location in the program. This process may result in changes in the code snippets that are moved, but it will not change the semantics of the whole program. The compiler can move code to different locations to improve the performance of the program.~\cite[p. 592]{aho1986}
 \end{problem}
+}
 
-\subsection{Quantum Computation}
 
-\subsection{Suzuki-Trotter Decomposition}
+With this background established, we now dive into details on gate set constraints, connectivity constraints, scheduling constraints, and circuit optimizations techniques for reducing complexity.
+
+\subsection{Gate synthesis}
+
+% I think I lost the point
+
+Imposing the gate set constraints which is known as the gate synthesis, is one of the oldest subroutines in the quantum compilation. The problem here is to decompose a general $n$-qubit gate into a sequence of gates from a universal gate set. It has been proven in the early days of quantum computing that the set of all one-qubit gates (which can be reduced to 2 gates for approximate synthesis \cite{TODO}) with CNOT and TOFFOLI is a choice for universal gate set \cite{barenco1995}. Afterward, the quest for finding the shortest sequence of gates from this universal gate set for a given gate has been a hot topic in the literature \cite{shende2006,vatan2004}.
+
+The results for the synthesis of a general $n$-qubit gate could not be better than $O(4^n)$ two-qubit gates \cite{TODO}, this justifies the reason behind the avoidance of multi-qubit gates in many levels. For two and three-qubit gates, the results ... \cite{TODO}.
+
+While there are many other possible choices for universal gate sets \cite{TODO}, and also most of the existing quantum computers need to decompose CNOTs and they are natively using other families of two-qubit gates, such as~\cite{foxen2020}, still, most of the results in the literature are based on the CNOT gate, and it has become a standard for the intermediate representation of quantum circuits, along with the set of one-qubit gates~\cite{zulehner2018,siraichi2018,li2019,zhang2021,zhou2020,itoko2019,murali2019,sivarajah2021}. Although it may be suboptimal for hardware, it is a theoretically well-studied two-qubit gate.
+
+A special topic in gate synthesis could be considered Hamiltonian compilation which aims to decompose the evolution of a Hamiltonian into a sequence of gates from the gate set. It is approximate most of the time, no wondering.
+
+
+% \subsection{Suzuki-Trotter Decomposition}
 
 The Suzuki-Trotter decomposition~\cite{trotter1959, suzuki1991} is one of the most important tools for dealing with Hamiltonians. This decomposition approximates the time evolution of a Hamiltonian with a sequence of time evolutions of simpler Hamiltonians (terms of the first Hamiltonian). The simplest case is called the Lie-Trotter formula, and it is stated as follows.
 
@@ -247,7 +186,79 @@ Generally, the decomposition is stated as follows.
 This could be considered the baseline process for the compilation of Hamiltonians.
 
 
-\section{Special topics on two-qubit gates}
+\cite{lao2021,campbell2019,childs2021}
+
+The literature on Hamiltonian compilation is currently limited. Even existing compilers have not implemented anything beyond a first-order Suzuki-Trotter decomposition~\cite{sivarajah2021, qiskit2023}. Also, if we consider the Suzuki-Trotter decomposition as a compiler, there are also a few related works that could be considered as a part of the literature, such as an analysis of its error~\cite{childs2021}.
+
+Not all efforts in Hamiltonian compilation are based on the Suzuki-Trotter decomposition. Another approach is to use a randomized compiler based on sampling Hamiltonian terms~\cite{campbell2019}. This method is called QDRIFT protocol and it is briefly described in the theorem below.
+
+\begin{theorem}[QDRIFT Compiler]
+  Given $H = \sum_{j=1}^k h_j$ and an oracle that samples the terms of the Hamiltonian by weight $\frac{\norm{h_i}_\infty}{\sum_{j=1}^k \norm{h_j}_\infty}$, by randomly sampling $N$ terms $\eta_1 \dots \eta_N$, then we can define the approximate evolution as
+  \begin{equation}
+    U(t) = \prod_{i=1}^N e^{it\frac{\eta}{N}\sum_{j=1}^k \norm{h_j}_\infty}
+  \end{equation}
+  where it asymptotically outperform first-order Suzuki-Trotter decomposition in number of gates at a certain level of error.
+\end{theorem}
+
+Our baseline compiler is described in~\cite{lao2021}, which uses the Suzuki-Trotter decomposition and defines routing and scheduling algorithms specifically for Hamiltonian compilation.
+
+The compiler includes two different heuristic search algorithms, one for initial qubit allocation and another for subsequent qubit allocation. The algorithm for subsequent qubit allocation also provides the route (of SWAP gates) for reallocation. This compiler supports all one and two-qubit gates as intermediate gates, which helps simplify the circuit by unifying consecutive two-qubit gates~\cite{lao2021}.
+
+
+\subsection{Qubit allocation and routing}
+
+% Papers with a focus on inital mapping \cite{siraichi2018,zhang2021,paler2019}
+
+% Papers with a focus on routing problem \cite{childs,zhou2020,itoko2019,cowtan2019}
+
+The definition of qubit allocation may vary in the literature, but we can roughly define it as below
+
+\begin{problem}[Qubit Allocation]
+  Qubit allocation is the problem of assigning physical qubits of a device to logical qubits of a quantum circuit at each time step to minimize the circuit's complexity.
+\end{problem}
+
+We can see that this problem is similar to problem \ref{prob:register_allocation}.
+
+While qubit allocation is NP-hard for arbitrary connectivity graphs, this can be shown easily by a reduction from graph isomorphism~\cite{siraichi2018}. However, real-world devices are not arbitrary, and by imposing some restrictions on the connectivity graph, we can solve the problem in polynomial time~\cite{childs}. For example, the problem is solvable in polynomial time for path graphs, complete graphs, tree graphs, and product graphs. These results has already been known for similar classical problems like token swapping and routing via matching~\cite{banerjee2017}.
+
+\begin{problem}[Routing via Matching]
+  Given a graph and a set of pebble, each of them at each node, a permutation is given and we need to achive the permutation by moving the pebbles. each move consists of swapping two pebbles at adjacent nodes. The problem is to find the minimum number of moves (a.k.a. routing number).
+\end{problem}
+
+For arbitrary connectivity graphs, there have been attempts to solve the problem, which can be feasible for small devices~\cite{siraichi2018}. The most common approach is to use a heuristic~\cite{zhang2021, itoko2019, cowtan2019} together with a search algorithm (such as BFS, $A^*$\cite{zulehner2018}, simulated annealing\cite{zhou2020}, or others\cite{li2019}) to find a reasonable solution.
+
+In most cases, the treatment of the initial mapping and subsequent mappings is different~\cite{zhou2020, li2019}. This is because while subsequent mappings can be seen as a routing problem in the permutation space, the initial mapping is a search to find the best starting point.
+
+Another approach is to use partial permutations, which allows for the use of the same algorithm for both initial mapping and subsequent mappings~\cite{childs, zulehner2018}.
+
+\begin{definition}[Partial Mapping]
+  A partial mapping, is a partial injective function from the logical qubits to the physical qubits.
+  It means that some of the logical qubits may not be mapped to any physical qubit.
+\end{definition}
+
+Current quantum compilers, such as those used in Qiskit\cite{qiskit2023, cross2022, murali2019} and Tket\cite{sivarajah2021}, use even simpler heuristics, while considering the errors of the device, which is not the case for most papers.
+
+\subsection{Scheduling}
+
+Even general quantum circuits may have a small degree of freedom in the order of execution. Moreover, the approximate circuit of a Hamiltonian may have a total arbitrariness in the order of execution. This degree of freedom can be set wisely to reduce the complexity of the circuit.
+
+\begin{problem}[Scheduling]
+  Given a quantum circuit that has a DAG of dependencies, the scheduling problem seeks for an optimal order of execution of the gates.
+\end{problem}
+
+Several heuristic algorithms have been proposed in the literature for both Hamiltonians~\cite{lao2021} and the general case~\cite{zhou2020, zulehner2018}.
+
+\subsection{Optimizations}
+
+Circuit optimization is often achieved by applying simplification rules to the circuit~\cite{pointing2021}. These simplification rules are usually based on the commutation relations of the gates~\cite{itoko2019}.
+
+Yet, this simplification rules are implemented as a pattern matching, therefore the hidden patterns that can be revealed by another simplification rules will not be found.
+
+\section{Two-qubit gates}
+
+% \sout{Papers with a focus on decomposition of gates and KAK} (maybe) \cite{tucci2005,vatan2004a}
+
+% Papers with a focus on entangling power (maybe) \cite{nielsen2003,berry2002,bennett2002,linowski2020}
 
 Another important fact about the gate synthesis of two-qubit gate, which is fruitful for many theoretical purposes is KAK (aka Khaneja-Glaser~\cite{khaneja2001} or Kraus-Cirac~\cite{kraus2001}) decomposition.??
 
@@ -280,13 +291,14 @@ Moreover, these efforts implicitly define a hierarchy of two-qubit gates based o
 
 To understand the current state of the art in quantum compilation, we will first look at the general compilation problem. 
 
-\subsection{General Quantum Compilation}
 
+\chapter{Related Works}\label{chap:discussion}
 
-\subsubsection{Qubit Allocation}
-
-\subsubsection{Generic Gate Set}
 \subsubsection{Routing and Bridging}
+
+% Ideas to improve SWAP complexity (embedding from 2QAN and CNOT framework from Kissinger) \cite{lao2021}\cite{nash2020,kissinger2019}
+
+% Mention network coding as well \cite{ho2008}
 
 The solution to the qubit allocation problem will not necessarily specify the SWAPs that are needed to change the mapping, although some approaches do so~\cite{childs, li2019, zhou2020}. In other cases, we need to use a routing or search algorithm to find the SWAPs that are required to change the mapping~\cite{zulehner2018, sivarajah2021}.
 
@@ -360,21 +372,6 @@ Now, the generalized bridge gate is defined as follows~\cite{nash2020}:
 \end{tikzpicture}
   \caption{The bridge gate for $n=6$}
 \end{figure}
-
-\subsubsection{Circuit Optimization}
-
-\subsection{Hamiltonian Compilation}
-
-
-\subsubsection{Scheduling}
-
-Even general quantum circuits may have a small degree of freedom in the order of execution. Moreover, the approximate circuit of a Hamiltonian may have a total arbitrariness in the order of execution. This degree of freedom can be set wisely to reduce the complexity of the circuit.
-
-\begin{problem}[Scheduling]
-  Given a quantum circuit that has a DAG of dependencies, the scheduling problem seeks for an optimal order of execution of the gates.
-\end{problem}
-
-Several heuristic algorithms have been proposed in the literature for both Hamiltonians~\cite{lao2021} and the general case~\cite{zhou2020, zulehner2018}.
 
 
 \chapter{Discussion}\label{chap:discussion}

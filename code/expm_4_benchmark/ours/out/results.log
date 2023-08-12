@@ -1,0 +1,31 @@
+Original circuit depth: 8
+Original circuit depth: 7
+Original circuit depth: 7
+Original circuit depth: 7
+Transpiled circuit depth (SWAP): 19
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 35), ('u3', 6), ('barrier', 2)])
+Original circuit depth: 6
+Transpiled circuit depth (SWAP): 18
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 35), ('u3', 6), ('barrier', 2)])
+Original circuit depth: 9
+Transpiled circuit depth (SWAP): 25
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 44), ('u3', 6), ('barrier', 2)])
+Original circuit depth: 7
+Transpiled circuit depth (SWAP): 16
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 29), ('u3', 6), ('barrier', 2)])
+Original circuit depth: 10
+Transpiled circuit depth (SWAP): 25
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 35), ('u3', 6), ('barrier', 2)])
+Original circuit depth: 9
+Transpiled circuit depth (SWAP): 25
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 44), ('u3', 6), ('barrier', 2)])
+Original circuit depth: 9
+Original circuit depth: 8
+Transpiled circuit depth (SWAP): 23
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 41), ('u3', 6), ('barrier', 2)])
+Original circuit depth: 6
+Transpiled circuit depth (SWAP): 18
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 35), ('u3', 6), ('barrier', 2)])
+Original circuit depth: 9
+Transpiled circuit depth (SWAP): 19
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 32), ('u3', 6), ('barrier', 2)])

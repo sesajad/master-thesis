@@ -1,0 +1,61 @@
+\chapter{Problem Statement}\label{chap:problem_statement}
+
+In addition to CNOT gates, it is also inevitable to use SWAP gates while allocating and routing the logical qubits through the physical qubits. However, there is another technique that could be used in some scenarios, called bridge gates~\cite{sivarajah2021,itoko2019,shende2006,siraichi2018} or remote CNOTs~\cite{zhou2020, nash2020}, which will be studied in detail in the next section.
+
+While reviewing 
+
+\begin{definition}[Schmidt Rank]
+  Schmidt rank of a two-qubit gate $U$ is defined as $d$, in the following Schmidt decomposition:
+  \begin{equation}
+    U = \sum_{i=1}^{d} \lambda_i A_i \otimes B_i
+  \end{equation}
+\end{definition}
+  
+For example, CNOT gate has Schmidt rank $d = 2$, while SWAP gate has Schmidt rank $d = 4$.
+
+\begin{definition}[Bridging Gate]
+  Given a connectivity constraint as a graph $G = (V, E)$, and a target gate $T$ that is a two-qubit gate defined on two qubits $a, b \in V$, then a sequence of gates defined on qubits in $V$ that implements $T$ is called a bridging gate. % It is the worst definition ever!!
+\end{definition}
+
+
+\chapter{Discussion}\label{chap:discussion}
+
+Here we introduce a sequence of gates that can be used to bridge an specific family of two qubit gates (those with Schmidt rank $d = 2$) over $n$ qubits, under a linear connectivity constraints. This circuit uses $4n + O(1)$ CNOTs with the depth $n + O(1)$. Later, we show that this circuit is optimal. After that we develop this idea further for any connectivity connectivity and we study its implication on bridging a CNOT in a fully-classical reversible circuit scheme.
+
+While we know that, the easiest way to bridge a target gate $T$ over $n$ qubits with linear connectivity is to use consequtive SWAPs, which will need $2n + O(1)$ SWAPs ($6n + O(1)$ CNOTs) and has at least $3n + O(1)$ depth (as we are assuming CNOTs as the only two-qubit gate in our gate set). This solution has been shown in Figure~\ref{fig:naive_bridging}.
+
+\begin{figure}{ht}
+  \centering
+  \begin{quantikz}
+    \lstick{$q_1$} & \gate{T} & \qw \\
+    \lstick{$q_2$} & \qw & \qw \\
+    \lstick{$q_3$} & \qw & \qw \\
+    \lstick{$q_4$} & \qw & \qw \\
+    \lstick{$q_5$} & \qw & \qw \\
+    \lstick{$q_6$} & \gate{T} & \qw \\
+  \end{quantikz}
+  \caption{Naive bridging of a two-qubit gate $T$ over $n = 6$ qubits with linear connectivity.}
+  \label{fig:naive_bridging}
+\end{figure}
+
+
+
+
+First assume qubits are arranged in a line, naming them $1, 2, \dots, n$. We aim to apply two-qubit gate $T$ on qubits $1, n$ while the only allowed to apply CNOT gates on adjacent qubits. We use the following circuit to achieve this goal:
+
+
+This circuit has depth $n + O(1)$ and uses $4n + O(1)$ CNOT gates. It can also be 
+
+Assume a set of qubits 
+- The main circuit (linear connectivity)
+- The main theorem (linear connectivity)
+  - no-go for Schmidt number 1
+- Extenstion to arbitrary connectivity
+- Corollary for classical circuits
+
+While the question of optimal bridging with linear connectivity for Schmidt number $d > 1$ is left unanswered, we conjecture that it is impossible to bridge them any better than the naive solution with SWAPs. ...
+
+
+
+- no-go for Schmidt number > 1
+- Ancilla qubits and network coding

@@ -29,3 +29,9 @@ Transpiled circuit gate count (SWAP): OrderedDict([('cx', 35), ('u3', 6), ('barr
 Original circuit depth: 9
 Transpiled circuit depth (SWAP): 19
 Transpiled circuit gate count (SWAP): OrderedDict([('cx', 32), ('u3', 6), ('barrier', 2)])
+Original circuit depth: 9
+Transpiled circuit depth (SWAP): 24
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 36), ('u3', 9), ('barrier', 2)])
+Original circuit depth: 8
+Transpiled circuit depth (SWAP): 24
+Transpiled circuit gate count (SWAP): OrderedDict([('cx', 33), ('u3', 9), ('barrier', 2)])

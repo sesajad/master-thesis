@@ -37,7 +37,7 @@ def experiment(n):
     qc.h(range(0, n))
     _linear_chain_gates(qc, n)
     qc.barrier()
-    qc.cnot(0, n - 1)
+    qc.crx(0.3, 0, n - 1)
     qc.barrier()
     _linear_chain_gates(qc, n)
     fig = qc.draw(output='mpl')
@@ -46,6 +46,7 @@ def experiment(n):
 
     # transpile circuit
     pm = level_0_pass_manager(PassManagerConfig(basis_gates=['cx', 'u3'], coupling_map=CouplingMap(target_coupling_map)))
+    print(pm.routing.passes())
     pm.routing.append(SWAPSimplifier())
     tqc = pm.run(qc)
     fig = tqc.draw(output='mpl', idle_wires=False)

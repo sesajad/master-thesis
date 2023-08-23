@@ -49,12 +49,13 @@ The gates in class nil are local gates that are applied on each qubit separately
   Now we $W_i$s are easily derived from $V_i$s.
 \end{proof}
 
-The gates in class II, such as SWAP, cannot be bridged any better than the naive solution with SWAPs. This fact is shown later using the special feature of these gates in Lemma~\ref{lem:no-trivial-commutation}. 
+The gates in class II, such as SWAP, cannot be bridged any better than the baseline implementation mentioned in Corollary~\ref{cor:baseline-bridged}. This fact is shown later using an special trait of these gates in Lemma~\ref{lem:no-trivial-commutation}. 
+
 \section{Bridged Gates}
 
 Here we introduce the bridged $T$ gate for any $T$ that belongs to class I. This gate is shown under a linear connectivity constraints, so it can be used for any other connectivity constraint (by using the connecting path between the qubits). An example of this gate (bridging over $4$ qubits) is shown in Figure~\ref{fig:bridged-class-i}. Note that $V_i$s and $\theta$ can be computed using Lemma~\ref{lem:crx-decomposition}
 
-\begin{figure}[ht]
+\begin{figure}[h!]
   \label{fig:bridged-class-i}
   \centering
   \begin{tikzpicture}
@@ -86,16 +87,16 @@ Here we introduce the bridged $T$ gate for any $T$ that belongs to class I. This
   
 This circuit above can be mathematically defined as follows:
 
-\begin{theorem}[Bridged Class I Gate]
-  Any class I gate $T$ with decomposition of Lemma~\ref{lem:crx-decomposition}, acting on qubits $1$ and $n$ could be bridged over $n-2$ qubits with linear connectivity using the following circuit  
+\begin{theorem}[Bridged class I gate]
+  For any class I two-qubit gate $T$, A bridged $T$ gate defined on qubits $1, n \in V$, where every $(i, i + 1) \in E$, can be implemented by the following sequence of gates:
   \begin{equation}
     T = (V_1 \otimes V_2) B^\dagger_n \mathrm{C}R_x^{\lceil n/2 \rceil \to \lceil n/2\rceil+1}(\theta) B_n (V_3 \otimes V_4),
   \end{equation}
-  where $B_n$ for $n = 4$ is defined as follows:
+  where $V_i$s and $\theta$ are defined in Lemma~\ref{lem:crx-decomposition}, and $B_n$ for $n = 4$ is defined as follows:
   \begin{equation}
     B_4 = (\CNOT^{1 \to 2} \otimes \CNOT^{3 \to 4}) (\CNOT^{2 \to 1} \otimes \CNOT^{4 \to 3}),
   \end{equation}
-  and for an even $n \ge 6$ could be written as follows:
+  and for an even $n \ge 6$ it could be written as follows:
   \begin{equation}
     \begin{aligned}
     B_{n} = &(\CNOT^{n/2 - 1 \to n/2} \otimes \CNOT^{n/2 + 1 \to n/2 + 2}) \\
@@ -105,179 +106,276 @@ This circuit above can be mathematically defined as follows:
     &(\CNOT^{2 \to 1} \otimes \CNOT^{n \to n-1}).
     \end{aligned}
   \end{equation}
-  Then, $B_n$ for any odd $n$ could be recovered by removing $n$th qubit and its corresponding CNOTs from $B_n$.
+  and, for any odd $n$ it could be recovered by removing $n$th qubit and its corresponding CNOTs from $B_n$.
 \end{theorem}
 \begin{proof}
-  In order to prove the correctness of this circuit, we derive it from the naive solution with SWAPs to prove that these two are equivalent. The first step to decompose the gate by $\mathrm{C}R_x$ and to push local gates out of the bridging process. Then, by decomposing each SWAP gate to three CNOTs, like below
-\begin{equation}
-  \mathrm{SWAP} = \CNOT^{2 \to 1} \CNOT^{1 \to 2} \CNOT^{2 \to 1},
-\end{equation}
-and using these commutation relations
-\begin{equation}
-  \begin{cases}
-  [\mathrm{C}R_x^{i \to i-1}(a), \mathrm{C}R_x^{i \to i+1}(b)] = 0 \\
-  [\mathrm{C}R_x^{i-1 \to i}(a), \mathrm{C}R_x^{i+1 \to i}(b)] = 0
-  \end{cases}
-\end{equation}
-we can simpilify one out of three CNOTs in a manner that is shown in Figure~\ref{fig:bridged-class-i-proof}. Further simplifications these commutation relations reduces the depth from $2n + O(1)$ to $n + O(1)$ by replacing CNOTs to improve parallelization.
+  In order to prove the correctness of this circuit, we will show that it is equivalent to the baseline implementation of bridged $T$ gate (Corollary~\ref{cor:baseline-bridged}).
+  
+  First, using the fact that $[\CNOT^{i \to j}, \CNOT{i \to k}] = 0$ and $[\CNOT^{i \to j}, \CNOT^{k \to j}] = 0$, we can show that $B_n$ (for even $n$) could be rearranged as:
 
-\begin{figure}[ht]
-  \label{fig:bridged-class-i-proof}
-  \centering
-  \begin{tikzpicture}
-    \node[scale=0.7] {
-      \begin{quantikz}
-        \qw & \targ{} & \ctrl{1} & \targ{} & \qw & \targ{} & \ctrl{1} & \targ{} & \qw\midstick[5,brackets=none]{=} & 
-        \qw & \targ{} & \ctrl{1} & \qw & \ctrl{1} & \targ{} & \qw \\
-        \qw & \ctrl{-1} & \targ{} & \ctrl{-1} & \ctrl{3} & \ctrl{-1} & \targ{} & \ctrl{-1} & \qw &
-        \qw & \ctrl{-1} & \targ{} &\ctrl{3} & \targ{} & \ctrl{-1} & \qw \\
-        \qw & \qw & \qw & \qw & \qw & \qw & \qw & \qw & \qw &
-        \qw & \qw & \qw & \qw & \qw & \qw & \qw  \\
-        \qw & \qw & \qw & \qw & \qw & \qw & \qw & \qw & \qw &
-        \qw & \qw & \qw & \qw & \qw & \qw & \qw \\
-        \qw & \qw & \qw & \qw & \gate{\mathrm{C}R_x(\theta)} & \qw & \qw & \qw & \qw &
-        \qw & \qw & \qw &\gate{\mathrm{C}R_x(\theta)} &\qw & \qw & \qw \\
-      \end{quantikz}
+  \begin{equation}
+    B_n = \prod_{i=1}^{n/2 - 1} (\CNOT^{i\to i+1}\CNOT{i+1\to i}) \otimes (\CNOT^{n-i\to n-i+1} \CNOT{n-i+1\to n-i}).
+  \end{equation}
+
+  This rearrangement for $n = 6$ is shown in Figure~\ref{fig:bridged-class-i-proof-a}.
+
+  \begin{figure}[h!]
+    \label{fig:bridged-class-i-proof-a}
+    \centering
+    \begin{tikzpicture}
+      \node[scale=0.6] {
+  \begin{quantikz}[transparent]
+    \gate{V_3} & \targ{}  & \qw     &\ctrl{1}& \qw    & \qw    & \qw    &\ctrl{1}& \qw     &\targ{}&\gate{V_1}&\qw\midstick[6,brackets=none]{=}&
+    \gate{V_3} & \targ{}  &\ctrl{1}& \qw     & \qw    & \qw    & \qw    & \qw     &\ctrl{1}&\targ{}&\gate{V_1}& \qw \\
+    \qw & \ctrl{-1}&\targ{}  & \targ{}&\ctrl{1}& \qw    &\ctrl{1}&\targ{} &\targ{}  &\ctrl{-1}&\qw&\qw&
+    \qw & \ctrl{-1}&\targ{}  & \targ{}&\ctrl{1}& \qw    &\ctrl{1}&\targ{} &\targ{}  &\ctrl{-1}&\qw&\qw\\
+    \qw & \qw &\ctrl{-1}& \qw    & \targ{}&\ctrl{1}&\targ{} & \qw    &\ctrl{-1}&\qw & \qw & \qw &
+    \qw & \qw & \qw    &\ctrl{-1}& \targ{}&\ctrl{1}&\targ{} &\ctrl{-1}& \qw    &\qw & \qw & \qw \\
+    \qw & \qw &\targ{}  & \qw    &\ctrl{1}& \gate{R_x(\theta)}&\ctrl{1}& \qw    &\targ{}  &\qw & \qw&\qw&
+    \qw & \qw   & \qw    &\targ{}&\ctrl{1}& \gate{R_x(\theta)}&\ctrl{1}&\targ{}& \qw      &\qw & \qw&\qw&\\
+    \qw & \targ{}  &\ctrl{-1}&\ctrl{1}& \targ{}& \qw    &\targ{} &\ctrl{1}&\ctrl{-1}&\targ{}&\qw&\qw& 
+    \qw & \targ{}  &\ctrl{1}&\ctrl{-1}& \targ{}& \qw    &\targ{} &\ctrl{-1}&\ctrl{1}&\targ{}&\qw&\qw\\
+    \gate{V_4} & \ctrl{-1}& \qw     & \targ{}& \qw    & \qw    & \qw    &\targ{} & \qw     &\ctrl{-1}& \gate{V_2} &\qw&
+    \gate{V_4} & \ctrl{-1}& \targ{} & \qw  & \qw    & \qw    & \qw     & \qw     &\targ{}&\ctrl{-1}& \gate{V_2} &\qw&
+    \end{quantikz}
     };
-  \end{tikzpicture}
-  \caption{Simplifying one CNOT in a SWAP gate}
-\end{figure}
+    \end{tikzpicture}
+    \caption{Rearrangement of CNOTs that is used in the proof}
+  \end{figure}
+
+  Then, using the fact that 
+  \begin{equation}
+    \SWAP^{i,j} = \CNOT^{j \to i} \CNOT^{i \to j} \CNOT^{j \to i},
+  \end{equation}
+  it could be simplified further to
+  \begin{equation}
+    B_n = \prod_{i=1}^{n/2 - 1} (\CNOT^{i+1 \to i} \SWAP^{i, i+1}) \otimes (\CNOT{n-i+1\to n-i}\SWAP^{n-i, n-i+1}).
+  \end{equation}
+
+  Now, by moving the rearranging the CNOTs to be applied after the SWAPs, we will have
+  \begin{equation}
+    B_n = \prod_{i=1}^{n/2 - 1} \CNOT^{n/2 \to i} \otimes \CNOT^{n-i+1 \to n/2 + 1} \prod_{i=1}^{n/2 - 1} \SWAP^{i, i+1} \otimes \SWAP^{n-i, n-i+1}.
+  \end{equation}
+
+  This process is shown in Figure~\ref{fig:bridged-class-i-proof-b} for $n = 6$.
+  
+  \begin{figure}[h!]
+    \label{fig:bridged-class-i-proof-b}
+    \centering
+    \begin{tikzpicture}
+      \node[scale=0.6] {
+  \begin{quantikz}[transparent]
+    \gate{V_3} & \swap{}  &\targ{}& \qw     & \qw    & \qw    & \qw    & \qw     &\targ{}&\swap{}&\gate{V_1}&\qw\midstick[6,brackets=none]{=}&
+    \gate{V_3} & \swap{}  & \qw     &\targ{}& \qw    & \qw    & \qw    &\targ{}& \qw     &\swap{}&\gate{V_1}&\qw \\
+    \qw & \swap{-1}&\ctrl{-1}  & \swap{}&\targ{}& \qw    &\targ{}&\swap{} &\ctrl{-1}  &\swap{-1}&\qw&\qw&
+    \qw & \swap{-1}& \swap{}&\qw&\targ{}& \qw    &\targ{}&\qw &\swap{} &\swap{-1}&\qw&\qw\\
+    \qw & \qw & \qw    &\swap{-1}& \ctrl{-1}&\ctrl{1}&\ctrl{-1} &\swap{-1}& \qw    &\qw & \qw & \qw &
+    \qw & \qw &\swap{-1}& \ctrl{-2} & \ctrl{-1}&\ctrl{1}&\ctrl{-1} &\ctrl{-2}& \swap{-1}    &\qw & \qw & \qw\\
+    \qw & \qw   & \qw    &\swap{1}&\targ{}& \gate{R_x(\theta)}&\targ{}&\swap{1}& \qw      &\qw & \qw&\qw&
+    \qw & \qw   & \swap{1}    &\targ{}&\targ{}& \gate{R_x(\theta)}&\targ{}&\targ{}& \swap{1}      &\qw & \qw&\qw\\
+    \qw & \swap{1}  &\targ{}&\swap{}& \ctrl{-1}& \qw    &\ctrl{-1} &\swap{}&\targ{}&\swap{1}&\qw&\qw& 
+    \qw & \swap{1}  &\swap{}&\qw& \ctrl{-1}& \qw    &\ctrl{-1} &\qw&\swap{}&\swap{1}&\qw&\qw\\
+    \gate{V_4} & \swap{}& \ctrl{-1} & \qw  & \qw    & \qw    & \qw     & \qw     &\ctrl{-1}&\swap{}& \gate{V_2} &\qw&
+    \gate{V_4} & \swap{}&  \qw & \ctrl{-2} & \qw    & \qw    & \qw     &\ctrl{-2}& \qw     &\swap{}& \gate{V_2} &\qw
+    \end{quantikz}
+    };
+    \end{tikzpicture}
+    \caption{Moving CNOTs across the SWAPs that is used in the proof}
+  \end{figure}
+
+  Finally, the second product term is similar to the one in Corollary~\ref{cor:baseline-bridged}, and the first product term is a sequence of CNOTs that all commute with $\mathrm{C}R_x^{n/2 \to n/2 + 1}(\theta)$, so they will be canceled in $B_n^\dagger \mathrm{C}R_x^{n/2 \to n/2 + 1}(\theta) B_n$.
+
+  \begin{equation}
+    \begin{aligned}
+    B^\dagger_n \mathrm{C}R_x^{n/2 \to n/2 + 1}(\theta) B_n &= \prod_{i=n/2 - 1}^{1} \SWAP^{i, i+1} \otimes \SWAP^{n-i, n-i+1} \\
+    & \phantom{=}~\mathrm{C}R_x^{n/2 \to n/2 + 1}(\theta) \\
+    & \phantom{=}~\prod_{i=1}^{n/2 - 1} \SWAP^{i, i+1} \otimes \SWAP^{n-i, n-i+1} \\
+    &= \mathrm{C}R_x^{1 \to n}(\theta)
+    \end{aligned}
+  \end{equation}
+
+  Finally, by recalling Lemma~\ref{lem:crx-decomposition},
+  \begin{equation}
+    (V_1 \otimes V_2) B^\dagger_n \mathrm{C}R_x^{\lceil n/2 \rceil \to \lceil n/2\rceil+1}(\theta) B_n (V_3 \otimes V_4) = T.
+  \end{equation}
+  
+  In order to prove the correctness of the circuit for odd $n$ as well, we can simply remove the $n$th qubit and its corresponding CNOTs from $B_n$. This fact will be propagated through the proof and every other thing will be the same.
 \end{proof}
 
-The formula above shows that the circuit uses $4n + O(1)$ CNOTs with the depth $n + O(1)$ (noting that $\mathrm{C}R_x$ needs two CNOTs \cite[chapter 4]{nielsen2010}). While we know that the easiest way to bridge a target gate $T$ over $n$ qubits with linear connectivity is to use consequtive SWAPs, which will need $2n + O(1)$ SWAPs ($6n + O(1)$ CNOTs) and has at least $3n + O(1)$ depth. Moreover, for bridging CNOTs, this circuit has approximately the same number of CNOTs as the bridged CNOT gate in Equation~\ref{eq:bridged-cnot-m-n} and Figure~\ref{fig:bridged-cnot-m-n}, however, its depth is four times less than that.
-
-% TODO, maybe add the bridged swap gate over 2 here, to have some fun!
+The formula above shows that the circuit uses $4n + O(1)$ CNOTs with the depth $n + O(1)$ (noting that $\mathrm{C}R_x$ needs two CNOTs \cite[chapter 4]{nielsen2010}). 
+While in comparison to the baseline implementation (see Corollary~\ref{cor:baseline-bridged}), this circuit has $33\%$ improvement in the number of CNOTs and $66\%$ improvement in the depth. Even for the special case of CNOT, this circuit has approximately the same number of CNOTs as the bridged CNOT gate in Equation~\ref{eq:bridged-cnot-m-n} and Figure~\ref{fig:bridged-cnot-m-n}, however, its depth is improved by $75\%$.
 
 \section{Proof of Optimality}
 
-These proofs are based on the idea that if two gate sequence $A = A_n \dots A_2 A_1$ and $B = B_m \dots B_2 B_1$ are equal, if we multiply an arbitrary gate $U_{0}$ from right
-\begin{equation}
-  A_n \dots A_2 A_1 U = B_m \dots B_2 B_1 U,
-\end{equation}
-then, if we move $U_{0}$ to the left, in a process that $U_0$ is converted to $U_{a1}$ like $U_{a1} A_1 = A_1 U_{0}$ and similarly for $B$s, so on, we will finally have
-\begin{equation}
-  U_{an} A_n \dots A_2 A_1 = U_{bm} B_m \dots B_2 B_1.
-\end{equation}
+Here we aim to proof the optimality of the bridged $T$ gate described in the previous section for class I gates, and the baseline implementation for class II gates. By optimality we mean that the number of CNOTs and the depth of the circuit is the minimum possible (upto an $O(1)$ constant).
 
-Because of the assumption of equality, we can conclude that $U_{an} = U_{bm}$. This means that the necessary condition for equality of $A$ and $B$ is $U_{an} = U_{bm}$. In order to be able to phrase this condition in a more useful way, we define the following concept:
+We start by introducing the the tools and the intuition behind their definitions, in addition to the core lemma that is used in the proofs. Then, we will prove the results for class I and class II gates separately. The first tool that we need is conjugation that is commonly used in group theory \cite{weisstein}.
 
-\begin{definition}[Successor]
-  If $AB = BC$, $C$ is called the successor of $A$ under $B$.
+\begin{definition}[Conjugation]
+  For any two gates $A$ and $B$, we define the conjugation of $A$ by $B$ as
+  \begin{equation}
+    B^\dagger A B.
+  \end{equation}
 \end{definition}
 
-With this definition, the whole argument could be summarized as the necessary condition for two gate sequences to be equal is that the successor of any arbitrary gate under these two gates should be equal.
+The intuition behind the conjugation of gates is that if the conjugation of $A$ by $B$ is $C$, then applying $A$ before $A$ is equivalent to applying $C$ after $B$. Informally this could be phrased as by crossing $A$ over $B$, $A$ will be transformed to $C$. Figure~\ref{fig:conjugations} shows a few conjugations that we will use in the proofs.
 
-\begin{definition}[Trivial/Nontrivial Action]
-  A gate $U$ defined on a set of qubits $Q$ is acting trivial on qubit $q \in Q$ if $U$ can be written as 
+\begin{figure}[ht]\label{fig:conjugations}
+  \centering
+  \begin{tikzpicture}
+    \node at (-3, 0.4) {a)};
+    \node[scale=0.7] {\begin{quantikz}
+    \qw & \gate{X} & \ctrl{1} & \qw\midstick[2,brackets=none]{=} & \qw & \ctrl{1} & \gate[2]{U} & \qw \\
+    \qw & \qw & \gate{R_x} & \qw & \qw & \gate{R_x} & \qw & \qw 
+  \end{quantikz}};\end{tikzpicture} \\
+  \begin{tikzpicture}
+    \node at (-3, 0.4) {b)};
+    \node[scale=0.7] {\begin{quantikz}
+    \qw & \gate{Z} & \ctrl{1} & \qw\midstick[2,brackets=none]{=} & \qw & \ctrl{1} & \gate{Z} & \qw \\
+    \qw & \qw & \gate{R_x} &  & \qw & \gate{R_x} & \qw & \qw 
+  \end{quantikz}};\end{tikzpicture} \\
+  \begin{tikzpicture}
+    \node at (-3, 0.4) {c)};
+    \node[scale=0.7] {\begin{quantikz}
+    \qw & \gate{U} & \swap{1} & \qw\midstick[2,brackets=none]{=} & \qw & \swap{1} & \qw &  \qw \\
+    \qw & \qw & \swap{} & \qw & \qw & \swap{} & \gate{U} & \qw 
+  \end{quantikz}};\end{tikzpicture}
+  \caption{a) Conjugation of $X \otimes I$ by $\mathrm{C}R_x$ is a two-qubit gate. b) Conjugation of $Z \otimes I$ by $\mathrm{C}R_x$ is $Z \otimes I$. c) Conjugation of $U \otimes I$ by SWAP is $I \otimes U$}.
+\end{figure}
+
+Furthermore, this effect, will help us to develop a tool to properly analyse the flow of information in a circuit. To complete this idea we define a sense of locality, using the following simple definition:
+
+\begin{definition}[Trivial/Nontrivial action]
+  A gate $U$ defined on a set of qubits $Q$ is acting trivially on qubit $q \in Q$ if $U$ can be written as 
   \begin{equation}
     U = U' \otimes I_q
   \end{equation}
   where $U'$ is a gate defined on $Q \setminus \{ q \}$ and $I_q$ is the identity gate on qubit $q$.
-  Respectively, $U$ is acting nontrivial on $q$ if it cannot be written in the above form.
+  Respectively, $U$ is acting nontrivially on $q$ if it cannot be written in the above form.
 \end{definition}
+
+Now, these proofs are based on the idea that if two gate sequence $A = A_n \dots A_2 A_1$ and $B = B_m \dots B_2 B_1$ are equal, then the conjugation of any arbitrary gate $U$ by $A$ is equal to the conjugation of $U$ by $B$. Or in another word,
+
+\begin{corollary}
+  Assume $A = A_n \dots A_2 A_1$ and $B = B_m \dots B_2 B_1$ are two gate sequences, then the necessary condition for $A = B$ is that for any arbitrary gate $U$, the conjugation of $U$ by $A$ must be equal to the conjugation of $U$ by $B$.
+\end{corollary}
+
+This corollary will be amazingly useful by noting the fact that the conjugation of $U$ by $A$ can be iteratively computed as follows:
+
+\begin{equation}
+  \begin{cases}
+    U_1 = \text{conjugation of } U \text{ by } A_1 \\
+    U_{i+1} = \text{conjugation of } U_i \text{ by } A_{i+1}
+  \end{cases}
+  \Rightarrow U_n = \text{conjugation of } U \text{ by } A.
+\end{equation}
 
 Now, we can start proving the optimality of the bridged $T$ gate for different classes, starting by class I.
 
 \subsection{Class I}
 
-The sketch of this proof consists of first reducing the problem to bridging a $\mathrm{C}R_x^{1\to n}$ gate. Then because of the nontrivial (on $1$ and $n$) successors of $X_1$ and $Z_n$ under $\mathrm{C}R_x^{1\to n}$, we can conclude that any sequence of gates that is bridged $\mathrm{C}R_x^{1\to n}$ needs to have a minimum number of CNOTs, and a minimum depth, to produce such nontrivial successors. These two bounds are achieved by the bridged $T$ gate.
+The sketch of this proof consists of first reducing the problem to bridging a $\mathrm{C}R_x^{1\to n}$ gate. Then because of the nontrivial (on $1$ and $n$) conjugations of $X_1$ and $Z_n$ by $\mathrm{C}R_x^{1\to n}$, we can conclude that any sequence of gates that is bridged $\mathrm{C}R_x^{1\to n}$ needs to have a minimum number of CNOTs, and a minimum depth, to produce such nontrivial conjugations. These two bounds are achieved by the bridged $T$ gate.
 
-So, to start the proof, we first establish two facts about the successors:
-\begin{corollary}[No-go for One-qubit Gates]\label{cor:no-go-one-qubit}
-  For any gate acting trivial on $t$, its successor under any one-qubit gate on $t$ is still trivial on $t$. 
+So, to start the proof, we first establish two facts about the conjugations:
+\begin{corollary}[No-go for one-qubit gates]\label{cor:no-go-one-qubit}
+  For any gate acting trivially on $t$, its conjugation by any one-qubit gate on $t$ is still trivial on $t$. 
 \end{corollary}
 
-\begin{lemma}[No-Move for Class I]\label{lem:no-move-class-i}
-  For any gate $X$ acting nontrivial on $n$ and trivial on $t$, its successor $Y$ under any class I gate $U$ acting on $n$ and $t$ , is nontrivial on $n$.
+This corollary informally states that if we want to create nontrivial action on $t$ by conjugation, we need use two-qubit gates. This fact can be easily shown by simply combining definition of trivial action and conjugation.
+
+\begin{lemma}[No-move for class I gates]\label{lem:no-move-class-i}
+  For any gate $A$ acting nontrivially on $n$ and trivially on $t$, its conjugation $B$ by any class I gate $U$ acting on $n$ and $t$, is nontrivial on $n$.
 \end{lemma}
 \begin{proof}
-  Noting that $X$ must be trivial on $t$ and nontrivial on $n$, $X$ could be decomposed as $X' \otimes I_t$.
-  Using the definition of successor in form of $U^\dagger X U = Y$, we can write
+  Noting that $A$ must be trivial on $t$ and nontrivial on $n$, $A$ could be decomposed as $A' \otimes I_t$.
+  Using the definition of conjugation in form of $U^\dagger A U = B$, we can write
 
   \begin{equation}
     \begin{aligned}
-    Y &= U^\dagger (X' \otimes I_t) U  \\
-    &= (V_3^\dagger \otimes V_4^\dagger)\mathrm{C}R_x(-\theta) (V_1^\dagger X' V_1 \otimes I) \mathrm{C}R_x(\theta) (V_3 \otimes V_4) \\
-    &= (V_3^\dagger \otimes V_4^\dagger)(\dyad{0} + R_x(-\theta) \otimes \dyad{1}) (V_1^\dagger X' V_1 \otimes I) (\dyad{0} + R_x(\theta) \otimes \dyad{1}) (V_3 \otimes V_4) \\
-    &= (V_3^\dagger \otimes V_4^\dagger)(V_1^\dagger X' V_1 \dyad{0} + R_x(-\theta) V_1^\dagger X' V_1 R_x(\theta) \dyad{1}) (V_3 \otimes V_4)
+    B &= U^\dagger (A' \otimes I_t) U  \\
+    &= (V_3^\dagger \otimes V_4^\dagger)\mathrm{C}R_x(-\theta) (V_1^\dagger A' V_1 \otimes I) \mathrm{C}R_x(\theta) (V_3 \otimes V_4) \\
+    &= (V_3^\dagger \otimes V_4^\dagger)(\dyad{0} + R_x(-\theta) \otimes \dyad{1}) (V_1^\dagger A' V_1 \otimes I) (\dyad{0} + R_x(\theta) \otimes \dyad{1}) (V_3 \otimes V_4) \\
+    &= (V_3^\dagger \otimes V_4^\dagger)(V_1^\dagger A' V_1 \dyad{0} + R_x(-\theta) V_1^\dagger A' V_1 R_x(\theta) \dyad{1}) (V_3 \otimes V_4)
     \end{aligned}
   \end{equation}
 
-  We have used the decomposition of Lemma~\ref{lem:crx-decomposition} for $U$ and expanded $\mathrm{C}R_x$ in terms of $\dyad{0}$ and $\dyad{1}$. Then, in order to proof by contradiction, we can assume that $Y = I_n \otimes Y'$, then $\tr_n(Y) = Y'$, so
+  We have used the decomposition of Lemma~\ref{lem:crx-decomposition} for $U$ and expanded $\mathrm{C}R_x$ in terms of $\dyad{0}$ and $\dyad{1}$. Then, in order to proof by contradiction, we can assume that $B = I_n \otimes B'$, then $\tr_n(B) = B'$, so
   \begin{equation}
-    Y' = \tr_n(Y) = \tr_n(X') \dyad{0}_n + \tr_n(X') \dyad{1}_n = \tr_n(X') I_t
+    B' = \tr_n(B) = \tr_n(A') \dyad{0}_n + \tr_n(A') \dyad{1}_n = \tr_n(A') I_t
   \end{equation}
-  which means that $Y = \tr_n(X') \otimes I_n \otimes I_t$, that results in $X = \tr_n(X') \otimes I_n \otimes I_t$,  as well. Which is a contradiction with the assumption that $X$ is nontrivial on $n$.
+  which means that $B = \tr_n(A') \otimes I_n \otimes I_t$, that results in $A = \tr_n(A') \otimes I_n \otimes I_t$,  as well. Which is a contradiction with the assumption that $A$ is nontrivial on $n$.
 \end{proof}
 
 Now, we can prove the optimality of the bridged $T$ gate for class I gates in the theorem below.
 
 \begin{theorem}\label{thm:no-go-class-i}
-  Any bridged $T$ gate where $T$ is a class I gate acting on qubits $1$ and $n$ with linear connectivity, needs at least $4n$ CNOTs and has at least $n$ depth.
+  Any bridged $T$ gate where $T$ is a class I gate acting on qubits $1$ and $n$ with linear connectivity, needs at least $4n + O(1)$ CNOTs and has at least $n$ depth.
 \end{theorem}
 \begin{proof}
-  Without losing generality, we can assume that $T = \mathrm{C}R_x^{1\to n}(\theta)$, because of Lemma~\ref{lem:crx-decomposition}. We can also show that the successor of $X_1$ and $Z_n$ under $T$ is nontrivial on $1$ and $n$, and this must also be valid for any sequence of gates that are equivalent to $T$.
+  Without losing generality, we can assume that $T = \mathrm{C}R_x^{1\to n}(\theta)$, because of Lemma~\ref{lem:crx-decomposition}. We can also show that the conjugation of $X_1$ and $Z_n$ (one qubit gates acting on qubits $1$ and $n$ respectively) by $T$ is nontrivial on $1$ and $n$ Then, we assume that a sequence of gates $A = A_\ell \dots A_2 A_1$ is equivalent to $T$, 
+  the conjugation of $X_1$ and $Z_n$ under $A$ must be nontrivial on $1$ and $n$ as well. 
 
-  Then, we assume that a sequence of gates $A = A_\ell \dots A_2 A_1$ is equivalent to $T$, then, we name the successor of $X_1$ and $Z_n$ under $A_i \dots A_1$ as $\xi_i$ and $\zeta_i$ respectively. Now, based on the fact that one-qubit gates could not create nontrivial action (Corollary~\ref{cor:no-go-one-qubit}), and because of the connectivity constraint, in order to have nontrivial action on $n$ by $\xi_n$, we need to a CNOT gate between $n$ and $n-1$ and also $x_i$ for some $i \ne n$, should act nontrivially on $n-1$. Moreover, using Lemma~\ref{lem:no-move-class-i} we know that using one CNOT will leave $\xi_n$ acting nontrivially on $n-1$, which is not desired. This means that at least two CNOTs are necessary. By recursively applying this argument, we can conclude that a sequence of CNOT pairs acting on subsequent qubits from $1$ to $n$ is necessary to have nontrivial action on $n$ by $\xi_n$. A similar argument could hold for $\zeta_n$. Now because of the fact that these two sequences are going in opposite directions, and they cannot have more than $O(1)$ gates in common, we can conclude that at least $4n$ CNOTs are necessary to have nontrivial action on $1$ and $n$ by $\xi_n$ and $\zeta_n$. Note that the minimum depth could be easily derived from the necessity of a sequence of CNOTs from $1$ to $n$ earlier.
+  In order to simplify the notation, we name the conjugation of $X_1$ and $Z_n$ by $A_i \dots A_1$ as $\xi_i$ and $\zeta_i$ respectively. Now, based on the fact that one-qubit gates could not create nontrivial action (Corollary~\ref{cor:no-go-one-qubit}), and because of the connectivity constraint, in order to have nontrivial action on $n$ by $\xi_n$, we need to a CNOT gate acting on $n$ and $n-1$, or in another word $A_j = \CNOT^{n \rightleftharpoons n-1}$ for some $j \le \ell$. Also $\xi_{j - 1}$, must act nontrivially on $n-1$. Moreover, using Lemma~\ref{lem:no-move-class-i} we know that using one CNOT ($A_j$) will leave $\xi_{j}$ acting nontrivially on $n-1$, which is not desired. This means that at least two CNOTs are necessary, or in another word $A_k = \CNOT^{n-1 \rightleftharpoons n-1 \pm 1}$ for $j < k \le \ell$. By recursively applying this argument, we can conclude that a sequence of CNOT pairs acting on subsequent qubits from $1$ to $n$ is necessary solely to make $\xi_n$ to have nontrivial action on $n$. A similar argument could hold for $\zeta_n$. Now because of the fact that these two sequences are going in opposite directions, and they cannot have more than $O(1)$ gates in common, we can conclude that at least $4(n-1) + O(1)$ CNOTs are necessary to have nontrivial action on $1$ and $n$ by $\xi_n$ and $\zeta_n$. Note that the minimum depth could be easily derived from the fact that a CNOT between $n$ and $n-1$ should take place after a CNOT between $n-1$ and $n-2$ and so on.
 \end{proof}
 
 \subsection{Class II}
 
-For the class II, we will prove in a similar manner that there is no solution better than the naive solution with SWAPs. Here we start by a lemma that shows the distinctive feature of the class II gates to be used in the proof.
+For the class II, we will prove in a similar manner that there is no solution better than the baseline implementation (Corollary~\ref{cor:baseline-bridged}). Here we start by a lemma that shows the distinctive feature of the class II gates to be used in the proof.
 
 \begin{lemma}\label{lem:no-trivial-commutation}
-  for any gate $X$ acting nontrivial on $n$ and trivial on $t$, its successor $Y$ under a class II gate $U$ acting on $n$ and $t$, is non-trivial on $t$. 
+  for any gate $A$ acting nontrivially on $n$ and trivially on $t$, its conjugation $B$ by a class II gate $U$ acting on $n$ and $t$, is nontrivial on $t$. 
 \end{lemma}
 \begin{proof}
-  Similar to the approach in proving Lemma~\ref{lem:no-move-class-i}, using proof by contradiction, we can assume that $Y = Y' \otimes I_t$, then
+  Similar to the approach in proving Lemma~\ref{lem:no-move-class-i}, using proof by contradiction, we can assume that $B = B' \otimes I_t$, then
   \begin{equation}
     \begin{aligned}
-      (X' \otimes I_t) U  &= U (Y' \otimes I_t) \\
-      (X' V_1 \otimes V_2) e^{i \alpha X \otimes X + i \beta Y \otimes Y + i \gamma Z \otimes Z} (V_3 \otimes V_4) &= (V_1 \otimes V_2) e^{i \alpha X \otimes X + i \beta Y \otimes Y + i \gamma Z \otimes Z} (V_3 Y' \otimes V_4). 
+      (A' \otimes I_t) U  &= U (B' \otimes I_t) \\
+      (A' V_1 \otimes V_2) e^{i \alpha X \otimes X + i \beta Y \otimes Y + i \gamma Z \otimes Z} (V_3 \otimes V_4) &= (V_1 \otimes V_2) e^{i \alpha X \otimes X + i \beta Y \otimes Y + i \gamma Z \otimes Z} (V_3 B' \otimes V_4). 
     \end{aligned}
   \end{equation}
   Then by multiplying $(V_1^\dagger \otimes V_2^\dagger)$ from left and $(V_3^\dagger \otimes V_4^\dagger)$ from right, we can write
   \begin{equation}
+      (V_1^\dagger A' V_1 \otimes I_t) e^{i \alpha X \otimes X + i \beta Y \otimes Y + i \gamma Z \otimes Z} = e^{i \alpha X \otimes X + i \beta Y \otimes Y + i \gamma Z \otimes Z} (V_3 B' V_3^\dagger \otimes I_t).
+  \end{equation}
+
+  Now, by expanding the exponential, we will have
+  \begin{equation}
     \begin{aligned}
-      (V_1^\dagger X' V_1 \otimes I_t) e^{i \alpha X \otimes X + i \beta Y \otimes Y + i \gamma Z \otimes Z} &= e^{i \alpha X \otimes X + i \beta Y \otimes Y + i \gamma Z \otimes Z} (V_3 Y' V_3^\dagger \otimes I_t).  \\
-      (V_1^\dagger X' V_1 \otimes I_t) (c_1 I \otimes I + i c_2 X \otimes X + i c_3 Y \otimes Y + i c_4 Z \otimes Z) &= (c_1 I \otimes I + i c_2 X \otimes X + i c_3 Y \otimes Y + i c_4 Z \otimes Z) (V_3 Y' V_3^\dagger \otimes I_t).  
+      (V_1^\dagger A' V_1 \otimes I_t) & (c_1 I \otimes I + i c_2 X \otimes X + i c_3 Y \otimes Y + i c_4 Z \otimes Z) \\
+      = &(c_1 I \otimes I + i c_2 X \otimes X + i c_3 Y \otimes Y + i c_4 Z \otimes Z) (V_3 B' V_3^\dagger \otimes I_t).  
     \end{aligned}
   \end{equation}
   Where $c_i$s are some constants. Finally, by multiplying both sides by $(I_n \otimes P)$ where $P$ is one of $I, X, Y, Z$, and then by tracing out the qubit $t$, we will have the following equations:
   \begin{equation}
     \begin{cases}
-      V_1^\dagger X' V_1 = V_3 Y' V_3^\dagger \\
-      V_1^\dagger X' V_1 X = X V_3 Y' V_3^\dagger & \text{if }\alpha \ne 0 \\
-      V_1^\dagger X' V_1 Y = Y V_3 Y' V_3^\dagger & \text{if }\beta \ne 0 \\
-      V_1^\dagger X' V_1 Z = Z V_3 Y' V_3^\dagger & \text{if }\gamma \ne 0. \\
+      V_1^\dagger A' V_1 = V_3 B' V_3^\dagger \\
+      V_1^\dagger A' V_1 X = X V_3 B' V_3^\dagger & \text{if }\alpha \ne 0 \\
+      V_1^\dagger A' V_1 Y = Y V_3 B' V_3^\dagger & \text{if }\beta \ne 0 \\
+      V_1^\dagger A' V_1 Z = Z V_3 B' V_3^\dagger & \text{if }\gamma \ne 0. \\
     \end{cases}
   \end{equation}
 
-  It means that if two of $\alpha, \beta, \gamma$ are non-zero, then $X'$ must have the form $X' = X'' \otimes I_n$ which is against the assumption that $X$ is nontrivial on $n$.
+  It means that if two of $\alpha, \beta, \gamma$ are non-zero, then $A$ must have the form $A' = A'' \otimes I_n$ which is against the assumption that $A$ is nontrivial on $n$.
 \end{proof}
 
 Now, we can prove the main theorem.
 
 \begin{theorem}\label{thm:no-go-class-ii}
-  Any bridged gate where $T$ is a class II gate acting on qubits $1$ and $n$ with linear connectivity, needs at least $6n$ CNOTs and has at least $3n$ depth.
+  Any bridged gate where $T$ is a class II gate acting on qubits $1$ and $n$ with linear connectivity, needs at least $6n + O(1)$ CNOTs and has at least $3n$ depth.
 \end{theorem}
 \begin{proof}
-  This proof is built upon the proof of Theorem~\ref{thm:no-go-class-i}, we have already made an argument that if 
-  { \color{red} TODO just to say that two is not enough because there is a unitary that the first CNOT misses, if the second CNOT is doing it, then it need a third CNOT to clean. }
+  This proof is similar to the proof of Theorem~\ref{thm:no-go-class-i}, 
+  assume that $A_j = \CNOT^{1 \to 2}$ is the only CNOT applying on qubits $1$ and $2$. We have assumed the direction without loose of generality as the other direction could be proved similarly. Now, the conjugation of $Z_1$ (acting on qubit $1$) by $A^\dagger_1 \dots A^\dagger_{j-1}$ that we call it $U_1$ must be nontrivial on qubit $1$. Using Lemma~\ref{lem:no-trivial-commutation}, the conjugation of $U_1$ by $T$ must act nontrivial on $n$. On the other hand the conjugation of $U_1$ under $A_j\dots A_1$ is equal to the conjugation of $Z_1$ under $A_j$ which is trivial on $2$ and will be trivial on any $i \ge 2$ as $A_j$ is the only CNOT between $1$ and $2$, which is not compatible with the assumption of acting nontrivially on $n$. This means that at least two CNOTs are necessary. We call the second CNOT as $A_k$ where $j < k$. Now, using Lemma~\ref{lem:no-move-class-i} we know that the conjugation of $U_1$ by $A_k\dots A_1$ is still nontrivial on $2$ that is not desired, so the third CNOT is necessary as well. Recursively we can conclude that a sequence made of three CNOTs is necessary. All of these arguments could be applied in the other direction, so we can conclude that at least $6n + O(1)$ CNOTs are necessary. 
 \end{proof}
 \subsection{Extension to Arbitrary Connectivity}
 
-The extension to arbitrary connectivity is straightforward. Given a connectivity graph $G = (V, E)$, and a target gate $T$ that is defined on $a,b \in V$, we can define a set of layers $L_1 \dots L_k$, defined as
+The extension to arbitrary connectivity is can be done by defining layers. Layers are used to linearizing the vertices of the graph with respect to their distance from a node. Then, the proof of Theorem~\ref{thm:no-go-class-i} and Theorem~\ref{thm:no-go-class-ii}
+% TODO
+ Given a connectivity graph $G = (V, E)$, and a target gate $T$ that is defined on $a,b \in V$, we can define a set of layers $L_1 \dots L_k$, defined as
 \begin{equation}
   L_i = \{ v \in V \mid \mathrm{dist}(v, a) = i \}.
 \end{equation}
 Where $\mathrm{dist}(v, a)$ is the distance between $v$ and $a$ in $G$. Then, the whole proof could be re used, with the only difference that instead of acting nontrivially on $i$th qubit, now we care about acting nontrivially on one of the qubits in $L_i$. This means that the number of CNOTs and the depth will be $4\mathrm{dist}(a,b) + O(1)$ and $\mathrm{dist}(a,b) + O(1)$ respectively. 
 
-\section{The Ancilla Case}
-
-As like as many other efforts, we assumed that any qubit in the device is used and is continuously carrying information. This might not be a bad idea in NISQ devices, where any single qubit is precious and the number of qubits is limited. However, because of its interesting results and its potential to be used in future devices, we will briefly discuss the case where we have ancilla qubits as well.
-
-Bridging class I gates over $n$ ancilla qubit needs $2n + O(1)$ CNOTs and this number for class II gates is $4n + O(1)$, which shows a significant improvement in comparison to th previous results.
-{ \color{red} TODO: show circuits for these cases 
-  mention network coding as well \cite{ho2008}
-}
+% TODO more formal things
+% TODO some shapes (for layers)

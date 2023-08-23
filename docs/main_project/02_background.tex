@@ -1,5 +1,6 @@
 \chapter{Background}\label{chap:background}
 
+% TODO edit this part
 We should be concerned with two key findings from the literature review on quantum compilation. First, the way that they broke down the problem and the assumption behind that. Secondly, the alogrithms and techniques that has been used and will be used for our research as well. Therefore, here we try to review both of these aspects to draw a big picture of our notion of quantum compilation and also to review the existing techniques related to our approach and we do these two alongside each other.
 
 \section{Quantum Compilation}
@@ -38,9 +39,9 @@ Imposing the gate set constraints which is known as the gate synthesis, is one o
 
 While most of the devices have the capability to perform arbitrary one-qubit gates, with a neglectible cost, there is a famous result for the synthesis of one-qubit gates, called Solovay-Kitaev theorem \cite{dawson2006}, that formalize approximate synthesis of any one-qubit gate using only two distinct one-qubit gates as the gate set.
 
-For two-qubit gates, it is known that the set of all one-qubit gates together with CNOT can produce any two-qubit gate and it can be done by upto three CNOTs (and it is optimal) \cite{vatan2004,vidal2004}. One of the famous gates that needs three CNOTs is SWAP. Using CNOT as the only available two-qubit gate although is common in theoretical studies of compilation \cite{zulehner2018,siraichi2018,li2019,zhang2021,zhou2020,itoko2019,murali2019} there are other continuous gate sets such as $\mathrm{fSim}(\theta, \phi)$ \cite{foxen2020} or other Hamiltonians evolution \cite{childsa}. Also, the evolution of XYZ Heisenberg interaction Hamiltonian, has been used as an intermediate gate set or a tool for analytical analysis in some works \cite{sousa2006,vidal2004}. The importance of this Hamiltonian is because of a decomposition (Cartan's KAK decomposition, Cirac-Kraus decomposition, or Khaneja-Glaser decomposition) that states any two-qubit gate can be made by only one evolution of $XYZ$ Hamiltonian and four one-qubit gates \cite{kraus2001,khaneja2001}. Here we state this fruitful decomposition as a lemma:
+For two-qubit gates, it is known that the set of all one-qubit gates together with CNOT can produce any two-qubit gate and it can be done by upto three CNOTs (and it is optimal) \cite{vatan2004,vidal2004}. One of the famous gates that needs three CNOTs is SWAP. Using CNOT as the only available two-qubit gate although is common in theoretical studies of compilation \cite{zulehner2018,siraichi2018,li2019,zhang2021,itoko2019,murali2019} there are other continuous gate sets such as $\mathrm{fSim}(\theta, \phi)$ \cite{foxen2020} or other Hamiltonians evolution \cite{childsa}. Also, the evolution of XYZ Heisenberg interaction Hamiltonian, has been used as an intermediate gate set or a tool for analytical analysis in some works \cite{sousa2006,vidal2004}. The importance of this Hamiltonian is because of a decomposition (Cartan's KAK decomposition, Cirac-Kraus decomposition, or Khaneja-Glaser decomposition) that states any two-qubit gate can be made by only one evolution of $XYZ$ Hamiltonian and four one-qubit gates \cite{kraus2001,khaneja2001}. Here we state this fruitful decomposition as a lemma:
 
-\begin{lemma}[KAK Decomposition \cite{tucci2005}]\label{lem:kak_decomposition}
+\begin{lemma}[KAK decomposition \cite{tucci2005}]\label{lem:kak_decomposition}
 For any $U \in U(4)$, there exist $V_1, V_2, V_3, V_4 \in U(2)$ together with $\alpha, \beta, \gamma \in \mathbb{R}$ such that
 \begin{equation}
   U = (V_1 \otimes V_2) e^{i\alpha X\otimes X + i\beta Y\otimes Y + i\gamma Z\otimes Z} (V_3 \otimes V_4).
@@ -53,66 +54,118 @@ Synthesis of local Hamiltonian evolution, as a special case of $n$-qubit gate, i
 
 \subsection{Qubit Allocation and Routing}
 
+The implementation of the qubits into a physical substance needs to overcome so many technical difficulties, and it will be impossible to have a fully connected device with a large number of qubits in the near future. Therefore, the connectivity constraint is always a part of the compilation process in the NISQ era. A typical device looks like Figure~\ref{fig:connectivity}, that the nodes are qubits and the edges are showing the pairs that a two-qubit gate can be applied on them.
+
+\begin{figure}[h!]
+  \centering
+  a) \includegraphics*[width=5cm]{shapes/ibm_dev}
+  b) \includegraphics*[width=5cm]{shapes/ibm_conn}
+  \caption{a) IBM Eagle processor, a 127 qubit device, b) IBM Eagle connectivity graph \cite{ibm2021}}
+  \label{fig:connectivity}
+\end{figure}
+
 Connectivity constraint will be similarly defined and then, we will review its literature which has drawn so much attention in the recent years.
 
 \begin{definition}[Connectivity constraint]
   The connectivity constraint is represented by a graph $G = (V, E)$ where $V$ is the set of qubits and $E$ is the set of edges between qubits. We say a circuit (or a sequence of gates) is compatible with the connectivity constraint if there is a map from qubits to vertices of $G$ and for each two-qubit gate between two qubits, there is an edge between the corresponding vertices in $G$.
 \end{definition}
 
-Researchers often break it down into two subproblems, qubit allocation and routing. The definition of them may vary in the literature, but we can roughly define the \textbf{qubit allocation} qubit allocation we roughly mean a mapping from logical qubits of a quantum circuit to physical qubits of a device in way that minimizes the circuit's complexity overhead due to routing. And by \textbf{routing} we mean the problem of finding an optimal circuit that is compatible with device connectivity and is equivalent to the circuit. Results suggest that the qubit allocation could affect the complexity of the circuit by $10\%$ in realistic scenarios~\cite{paler2019}. This fact justifies such a break-down of connectivity constraint into two subproblems furthermore.
+Researchers often tackle the problem of resolving connectivity constraint, by defining two subproblems, qubit allocation and routing. The definition of them may vary in the literature, but we can roughly define the \textbf{qubit allocation} qubit allocation we roughly mean a mapping from logical qubits of a quantum circuit to physical qubits of a device in way that minimizes the circuit's complexity overhead due to routing. And by \textbf{routing} we mean the problem of finding an optimal circuit that is compatible with device connectivity and is equivalent to the circuit. Results suggest that the qubit allocation could affect the complexity of the circuit by $10\%$ in realistic scenarios~\cite{paler2019}. This fact justifies such a break-down of connectivity constraint into two subproblems furthermore.
 
 Qubit allocation shares common traits with other resource allocation problems \cite{alicherry2012},\cite[pp. 440-444]{allen2001} and it is not wondering that it is NP-hard for arbitrary connectivity graphs, this can be shown easily by a reduction from graph isomorphism~\cite{siraichi2018}. Note that real-world devices are not arbitrary graphs and it might be exactly solvable in reasonable time for certain families of graphs. 
 
-There have been attempts to find the optimal solution by searching for arbitrary connectivity graphs, which can be feasible for small devices~\cite{siraichi2018}. But, the most common approach in the research is to use a heuristic~\cite{zhang2021, itoko2019, cowtan2019,paler2019, murali2019} together with a search algorithm (such as BFS, $A^*$\cite{zulehner2018}, simulated annealing\cite{zhou2020}, or others\cite{li2019}) to find a reasonable solution. Some of these efforts have also been implmented in current quantum compilers \cite{qiskit2023,sivarajah2021}.
+There have been attempts to find the optimal solution by searching for arbitrary connectivity graphs, which can be feasible for small devices~\cite{siraichi2018}. But, the most common approach in the research is to use a heuristic~\cite{zhang2021, itoko2019, cowtan2019,paler2019, murali2019} together with a search algorithm (such as BFS, $A^*$\cite{zulehner2018}, or others\cite{li2019}) to find a reasonable solution. Some of these efforts have also been implmented in current quantum compilers \cite{qiskit2023,sivarajah2021}.
 
-Treating routing problem, could be done similarly by thinking of routing as a subsequent qubit reallocations. By introducing a search space of partial allocations (that are partial functions), we can use a unified search space for both qubit allocation and routing~\cite{zulehner2018,childs}. While this will unlock the possibility of using the same algorithm for both qubit allocation and routing that is used in \cite{zulehner2018}, the most of the recent works prefer to treat them separately~\cite{zhou2020, li2019,lao2021,childs}.
+Treating routing problem, could be done similarly by thinking of routing as a subsequent qubit reallocations. By introducing a search space of partial allocations (that are partial functions), we can use a unified search space for both qubit allocation and routing~\cite{zulehner2018,childs}. While this will unlock the possibility of using the same algorithm for both qubit allocation and routing that is used in \cite{zulehner2018}, the most of the recent works prefer to treat them separately~\cite{li2019,lao2021,childs}.
 
-Using heuristic alogrithms for routing is a common practice in the literature~\cite{zulehner2018, zhou2020, itoko2019, cowtan2019, li2019}, while there are efforts to find the an exact algorithm \cite{itoko2019} that will be inefficient for general case, and by imposing some restrictions on the connectivity graph, we can solve the problem in polynomial time~\cite{childs}. For example, the problem is solvable in polynomial time for path graphs, complete graphs, tree graphs, and product graphs. These results has been built upon classical problems that are already known like token swapping and routing via matching~\cite{banerjee2017}.
+Using heuristic alogrithms for routing is a common practice in the literature~\cite{zulehner2018, itoko2019, cowtan2019, li2019}, while there are efforts to find the an exact algorithm \cite{itoko2019} that will be inefficient for general case, and by imposing some restrictions on the connectivity graph, we can solve the problem in polynomial time~\cite{childs}. For example, the problem is solvable in polynomial time for path graphs, complete graphs, tree graphs, and product graphs. These results has been built upon classical problems that are already known like token swapping and routing via matching~\cite{banerjee2017}.
 
-While the SWAP gate plays a crucial role in most of the routing algorithms, there are a few efforts that goes beyond the SWAP gates, like using bridged CNOT (sometime called remote CNOT) gate over 1 qubit \cite{itoko2019,zhou2020,nishio2020,siraichi2018,sivarajah2021} \footnote{
-  There were also efforts for defining a bridged CNOT gate over 2 qubits \cite{zhou2020,nishio2020} but they were not correct, meaning that they were not equivalent to CNOT gate on qubits that have two qubits in between.
-} instead of SWAP gates. Bridged CNOT gates are a name for implementations of CNOT on non-adjacent qubits, but to study them in detail we aim to define formally.
+While the SWAP gate plays a crucial role in most of the routing algorithms, there are a few efforts that goes beyond the SWAP gates, like using bridged CNOT (sometime called remote CNOT) gate over 1 qubit \cite{itoko2019,siraichi2018,sivarajah2021}. By bridged CNOT gate, we mean any sequence of gates that acts as CNOT between two non-adjacent qubits without explicitly having a SWAP gate in it. An example of such gate is depicted in Figure~\ref{fig:bridged-cnot-1}a and it can be compared with the case that  are explicitly used, which is shown in Figure~\ref{fig:bridged-cnot-1}b.
 
-\begin{definition}[Bridged gate]
-  Given a connectivity constraint $G = (V, E)$, a target two-qubit gate called $T$ defined on two qubits $a, b \in V$ then, a \textbf{bridged} $T$ gate is a sequence of gates that obeys the connectivity constraint and is identical to $T$ on $a, b$.
-\end{definition}
-
-For the sake of readability, we may omit specifying the connectivity constraint when it is a linear connectivity constraint. With this definition in hand, we may think that any gate could be bridged easily by using SWAP gates, for example under a linear connectivity constraint, a bridged CNOT gate on qubits with distance 1 (or as it was informally described before, over one qubit) using SWAPs is depicted in Figure~\ref{fig:bridged-cnot-1}b. However it is clearly inefficient, in comparison to another way of bridging CNOT gates in a similar situation, which is shown in Figure~\ref{fig:bridged-cnot-1}a. This shows the importance of looking for non-trivial and efficient ways to bridge gates, that people has been working on it under different names for a while \cite{shende2006}.
-
-\begin{figure}[h]
+\begin{figure}[h!]
   \label{fig:bridged-cnot-1}
   \centering
   \begin{tikzpicture}
     \node at (-4.3, 0.8) {a)};
     \node[scale=0.7] at (0,0) {
     \begin{quantikz}
-    \lstick{a} & \ctrl{2} & \qw \midstick[3,brackets=none]{=} & \qw & \ctrl{1} & \qw & \ctrl{1} & \qw \\
-    \lstick{b} & \qw & \qw & \ctrl{1} & \targ{} & \ctrl{1}  & \targ{} & \qw \\
-    \lstick{c} & \targ{} & \qw & \targ{} & \qw  & \targ & \qw  & \qw &  \qw \\
+    \qw & \ctrl{2} & \qw \midstick[3,brackets=none]{=} & \qw & \ctrl{1} & \qw & \ctrl{1} & \qw \\
+    \qw & \qw & \qw & \ctrl{1} & \targ{} & \ctrl{1}  & \targ{} & \qw \\
+    \qw & \targ{} & \qw & \targ{} & \qw  & \targ & \qw  & \qw &  \qw \\
   \end{quantikz}
   };
   \node at (-4.3, -1.2) {b)};
   \node[scale=0.7] at (1,-2) {
     \begin{quantikz}
-      \lstick{a} & \ctrl{2} & \qw \midstick[3,brackets=none]{=} & \swap{1} & \qw & \swap{1} & \qw \midstick[3,brackets=none]{=} & \ctrl{1} & \targ{} & \ctrl{1} & \qw &\ctrl{1} & \targ{} & \ctrl{1} & \qw \\
-      \lstick{b} & \qw & \qw & \swap{} & \ctrl{1} & \swap{} & \qw & \targ{} & \ctrl{-1}& \targ{} & \ctrl{1} & \targ{} & \ctrl{-1}& \targ{} & \qw \\
-    \lstick{c} & \targ{} & \qw  & \qw & \targ{} & \qw & \qw & \qw & \qw & \qw & \targ & \qw & \qw & \qw & \qw  & \qw \\
+      \qw & \ctrl{2} & \qw \midstick[3,brackets=none]{=} & \swap{1} & \qw & \swap{1} & \qw \midstick[3,brackets=none]{=} & \ctrl{1} & \targ{} & \ctrl{1} & \qw &\ctrl{1} & \targ{} & \ctrl{1} & \qw \\
+      \qw & \qw & \qw & \swap{} & \ctrl{1} & \swap{} & \qw & \targ{} & \ctrl{-1}& \targ{} & \ctrl{1} & \targ{} & \ctrl{-1}& \targ{} & \qw \\
+      \qw & \targ{} & \qw  & \qw & \targ{} & \qw & \qw & \qw & \qw & \qw & \targ & \qw & \qw & \qw & \qw  & \qw \\
     \end{quantikz}
     };
     \end{tikzpicture}
-  \caption{a) A Bridged CNOT gate over one qubit, b) A naive implementation of CNOT gate over one qubit using SWAP gates}
+  \caption{a) A bridged CNOT gate over one qubit, b) The baseline implementation of bridged CNOT gate over one qubit}
 \end{figure}
 
-In addition to those efforts, there are tries to totally skip the SWAP gates and directly apply the routing process by transforming the circuit into a compatible circuit using CNOTs and $R_z$s \cite{nash2020,kissinger2019}. Note that this process is not easily expandable to arbitrary gates and circuits, and because of its nature (of working directly with a representation of the whole circuit), its scalability is questionable. Still, an important result of this approach is to generate bridged CNOT gates over more than one qubits in a systematic way \cite{nash2020}. The gate that can be generated is written in Equation \ref{eq:bridged-cnot-m-n} and is shown in Figure \ref{fig:bridged-cnot-m-n}.
+\begin{figure}[h!]
+  \label{fig:bridged-swap-1}
+  \centering
+  \begin{tikzpicture}
+    \node at (-4.3, 0.8) {a)};
+    \node[scale=0.7] at (0,0) {
+    \begin{quantikz}
+      \qw & \swap{2} & \qw \midstick[3,brackets=none]{=} & \ctrl{1} & \qw &\targ{}& \qw & \ctrl{1}& \qw &\targ & \qw & \qw & \qw \\
+      \qw & \qw & \qw & \targ{} & \targ{} & \ctrl{-1} & \ctrl{1} & \targ{} & \targ{} & \ctrl{-1} & \ctrl{1} & \qw \\
+      \qw & \swap{} & \qw & \qw & \ctrl{-1} & \qw &\targ{}& \qw & \ctrl{-1}& \qw &\targ & \qw & \qw \\
+  \end{quantikz}
+  };
+  \node at (-4.3, -1.2) {b)};
+  \node[scale=0.7] at (1,-2) {
+    \begin{quantikz}
+      \qw & \swap{2} & \qw \midstick[3,brackets=none]{=} &
+      \swap{1} & \qw & \swap{1} & \qw \midstick[3,brackets=none]{=} &
+      \ctrl{1} & \targ{} & \ctrl{1} & \qw & \qw & \qw &\ctrl{1} & \targ{} & \ctrl{1} & \qw \\
+      \qw & \qw & \qw &
+       \swap{} & \swap{1} & \swap{} & \qw & 
+      \targ{} & \ctrl{-1}& \targ{} & \ctrl{1} & \targ{} & \ctrl{1} & \targ{} & \ctrl{-1}& \targ{} & \qw \\
+      \qw & \swap{} & \qw  &
+      \qw & \swap{} & \qw & \qw &
+      \qw & \qw & \qw & \targ{} & \ctrl{-1} & \targ{} & \qw & \qw & \qw  & \qw \\
+    \end{quantikz}
+    };
+    \end{tikzpicture}
+  \caption{a) A bridged SWAP gate over one qubit, b) The baseline implementation of bridged SWAP gate over one qubit}
+\end{figure}
+
+This idea could be broaden to any two-qubit gate, even SWAP itself, (see Figure~\ref{fig:bridged-swap-1}). This is the problem people have been working on under different names \cite{shende2006} and, here we define bridged gates for an arbitrary connectivity constraint in the definition below:
+
+\begin{definition}[Bridged gate]
+  Given a connectivity constraint $G = (V, E)$, a target two-qubit gate called $T$ defined on two qubits $a, b \in V$ then, a \textbf{bridged} $T$ gate is a sequence of gates that obeys the connectivity constraint and is identical to $T$.
+\end{definition}
+
+For the sake of readability, we may omit specifying the connectivity constraint when it is a linear connectivity constraint. From this definition, we can see that the baseline implementation of a bridged gate can be done using SWAPs (like Figure~\ref{fig:bridged-cnot-1}b and Figure~\ref{fig:bridged-swap-1}b), however we are looking for more efficient implementations that are not necessarily trivial (like Figure~\ref{fig:bridged-cnot-1}a and Figure~\ref{fig:bridged-swap-1}a). The baseline implementation is also shown in the following corollary.
+
+\begin{corollary}[Baseline implemention of a bridged gate]\label{cor:baseline-bridged}
+  For any two-qubit gate $T$, A bridged $T$ gate defined on qubits $1, n \in V$ where every $(i, i + 1) \in E$, can be implemented for an even $n$ using the following sequence of gates:
+  \begin{equation}
+    T^{1,n} = \prod_{i=n/2-1}^{1} \SWAP^{i,i+1} \otimes \SWAP^{n-i+1, n-i} T^{n/2, n/2+1} \prod_{i=1}^{n/2-1} \SWAP^{i,i+1} \otimes \SWAP^{n-i+1, n-i},
+  \end{equation}
+  and for an odd $n$ we can respectively use:
+  \begin{equation}
+    T^{1,n} = \SWAP^{n,n-1} T^{1,n-1} \SWAP^{n,n-1}.
+  \end{equation}
+
+  Where $\SWAP^{i,j}$ is a SWAP gate between qubits $i$ and $j$, $T^{i,j}$ is a $T$ gate applied on $i$ and $j$, and note that $\prod_{i=a}^b A_i = A_b A_{b-1} \dots A_a$.
+\end{corollary}
+
+In addition to those efforts, there are tries to totally avoid the SWAP gates and directly apply the routing process by transforming the circuit into a compatible circuit using CNOTs and $R_z$s \cite{nash2020,kissinger2019}. Note that this process is not easily expandable to arbitrary gates and circuits, and because of its nature (of working directly with a representation of the whole circuit), its scalability is questionable. Despite that, an important result of this approach is to generate bridged CNOT gates over more than one qubits in a systematic way \cite{nash2020}. The gate that can be generated is written in Equation \ref{eq:bridged-cnot-m-n} and is shown in Figure \ref{fig:bridged-cnot-m-n}. This generalization uses $4n + O(1)$ CNOTs and has a depth of $4n + O(1)$ for a bridged CNOT over $n$ qubits, which is not generally better in comparison to the baseline implementation that uses $6n + O(1)$ CNOTs, with a depth of $3n + O(1)$.
 
 \begin{equation} 
   \label{eq:bridged-cnot-m-n}
-  \CNOT^{1\to n} = \qty[\prod_{i=n - 2}^{2}\CNOT^{i + 1\to i} \prod_{i=1}^{n - 1}\CNOT^{i + 1\to i}]^2
+  \CNOT^{1\to n} = \qty[\prod_{i=n - 2}^{2}\CNOT^{i + 1\to i} \prod_{i=1}^{n - 1}\CNOT^{i + 1\to i}]^2,
 \end{equation}
+where $\CNOT^{i\to j}$ is a CNOT gate with control on qubit $i$ and target on qubit $j$.
 
-Note that $\CNOT^{1\to n}$ is a CNOT gate with control on qubit $1$ and target on qubit $n$. Also $\prod_{i=a}^b A_i = A_b A_{b-1} \dots A_a$ in this context.
-
-\begin{figure}[ht]
+\begin{figure}[h!]
   \label{fig:bridged-cnot-m-n}
   \centering
   \begin{tikzpicture}
@@ -141,7 +194,6 @@ Note that $\CNOT^{1\to n}$ is a CNOT gate with control on qubit $1$ and target o
 \end{tikzpicture}
   \caption{A bridged CNOT gate over 6 qubits}
 \end{figure}
-
 
 \subsection{Optimizations}
 

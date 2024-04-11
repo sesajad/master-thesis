@@ -9,7 +9,7 @@
 \usetikzlibrary{quantikz}
 \usepackage{svg}
 
-\usepackage[normalem]{ulem}
+\usepackage{multirow}
 
 \usepackage{physics}
 \usepackage{amsthm}
@@ -26,6 +26,7 @@
 \newtheorem{definition}{Definition}
 \newtheorem{corollary}{Corollary}
 \newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
 \newtheorem{problem}{Problem}
 \newtheorem{lemma}{Lemma}
 
@@ -41,7 +42,7 @@
 \tableofcontents
 
 \begin{abstract}
-  
+  Quantum computers promise to revolutionise computing by harnessing the power of quantum mechanics. However, current quantum hardware is limited by restricted qubit connectivity that necessitates the extensive use of expensive SWAP gates during compilation. This paper introduces an optimal method to implement two-qubit gates between non-adjacent qubits. We formally define the bridging problem and present circuits that bridge a class of two-qubit gates over multiple qubits. Our circuit uses only $4n+O(1)$ CNOTs to bridge key entangling gates like CNOT, improving by $33\%$ over baseline SWAP methods. We further prove the optimality of this circuit, and the optimality of the baseline SWAP method for other gates like SWAP. Beyond reducing gate counts, our techniques offer depth improvements up to $66\%$. The results generalise to arbitrary device graphs, where $n$ is the distance between the target qubits. Our bridging techniques will help mitigate connectivity constraints and may serve as useful components for routing in near-term quantum computers. Further research directions are outlined including simultaneous bridging, ancilla-assisted bridging, and practical implementations.
 \end{abstract}
 
 \include{01_introduction}
